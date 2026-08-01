@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="形式手法とテスト技法を実務のコード例で学ぶ日本語HTML教科書">
+<title>TLA+ 実践サンプル | 形式手法とテスト技法</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --surface-2: #eef2ed;
+  --surface-3: #e4ebe4;
+  --ink: #25312d;
+  --muted: #5d6c65;
+  --faint: #7b8b83;
+  --line: #d3ddd5;
+  --accent: #236b5a;
+  --accent-strong: #174e42;
+  --accent-soft: #d9eee6;
+  --link: #155e9a;
+  --shadow: 0 15px 45px rgba(37, 55, 45, .10);
+  --code-bg: #202c2a;
+  --code-ink: #e8f2eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #e5f1fb;
+  --info-line: #347daf;
+  --warning-bg: #fff3d8;
+  --warning-line: #b27a17;
+  --danger-bg: #fde4e5;
+  --danger-line: #b54a50;
+  --tip-bg: #e6f4e8;
+  --tip-line: #3b8450;
+  --focus: #d67500;
+  --sidebar-width: 18rem;
+  --content-width: 72ch;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18211f;
+    --surface: #202b28;
+    --surface-2: #263632;
+    --surface-3: #30433d;
+    --ink: #e7eee9;
+    --muted: #b6c7bf;
+    --faint: #91a79c;
+    --line: #40544d;
+    --accent: #7ad0b2;
+    --accent-strong: #a1e5ca;
+    --accent-soft: #24473e;
+    --link: #8dcaff;
+    --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+    --code-bg: #101817;
+    --code-ink: #e5f1eb;
+    --code-keyword: #9bd6ff;
+    --code-string: #f2c987;
+    --code-comment: #91aa9d;
+    --code-number: #dfb2ff;
+    --code-operator: #ff9eaa;
+    --code-function: #b8e7c0;
+    --info-bg: #183449;
+    --info-line: #82bce7;
+    --warning-bg: #4a3819;
+    --warning-line: #efc767;
+    --danger-bg: #4d252a;
+    --danger-line: #ef9ca1;
+    --tip-bg: #1d3b29;
+    --tip-line: #91d19b;
+    --focus: #ffc36d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18211f;
+  --surface: #202b28;
+  --surface-2: #263632;
+  --surface-3: #30433d;
+  --ink: #e7eee9;
+  --muted: #b6c7bf;
+  --faint: #91a79c;
+  --line: #40544d;
+  --accent: #7ad0b2;
+  --accent-strong: #a1e5ca;
+  --accent-soft: #24473e;
+  --link: #8dcaff;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+  --code-bg: #101817;
+  --code-ink: #e5f1eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #183449;
+  --info-line: #82bce7;
+  --warning-bg: #4a3819;
+  --warning-line: #efc767;
+  --danger-bg: #4d252a;
+  --danger-line: #ef9ca1;
+  --tip-bg: #1d3b29;
+  --tip-line: #91d19b;
+  --focus: #ffc36d;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+a { color: var(--link); text-underline-offset: .18em; }
+a:hover { color: var(--accent-strong); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip-link {
+  position: fixed; z-index: 50; top: .75rem; left: .75rem;
+  padding: .5rem .75rem; color: #fff; background: var(--accent-strong);
+  border-radius: .5rem; transform: translateY(-160%); transition: transform .2s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.menu-toggle {
+  display: none; position: fixed; z-index: 40; top: .9rem; left: .9rem;
+  width: 2.9rem; height: 2.9rem; border: 1px solid var(--line);
+  border-radius: .75rem; color: var(--ink); background: var(--surface);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.theme-toggle {
+  position: fixed; z-index: 35; top: 1rem; right: 1.25rem;
+  min-width: 6.7rem; padding: .45rem .7rem; border: 1px solid var(--line);
+  border-radius: 999px; color: var(--ink); background: var(--surface);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .08); cursor: pointer;
+}
+.sidebar {
+  position: fixed; z-index: 30; inset: 0 auto 0 0; display: flex;
+  width: var(--sidebar-width); flex-direction: column; padding: 1.25rem 1rem 1.5rem;
+  overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface);
+}
+.brand { display: block; margin: .15rem .5rem 1.15rem; color: var(--ink); font-size: .93rem; font-weight: 800; line-height: 1.45; text-decoration: none; letter-spacing: .04em; }
+.brand small { display: block; margin-top: .3rem; color: var(--muted); font-size: .72rem; font-weight: 500; letter-spacing: 0; }
+.chapter-nav, .page-outline { display: grid; gap: .18rem; }
+.nav-label { margin: 1rem .5rem .35rem; color: var(--faint); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chapter-link, .outline-link { display: block; border-left: 3px solid transparent; border-radius: 0 .45rem .45rem 0; color: var(--muted); text-decoration: none; }
+.chapter-link { padding: .46rem .55rem; font-size: .84rem; line-height: 1.4; }
+.outline-link { padding: .22rem .45rem; font-size: .76rem; line-height: 1.45; }
+.outline-link.level-3 { padding-left: 1.05rem; font-size: .72rem; }
+.chapter-link:hover, .outline-link:hover, .chapter-link.is-current, .outline-link.is-active { border-left-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.sidebar-close { display: none; align-self: flex-end; border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.drawer-backdrop { display: none; }
+main {
+  width: min(var(--content-width), calc(100% - 2rem));
+  margin: 0 auto 0 calc(var(--sidebar-width) + max(2rem, (100vw - var(--sidebar-width) - var(--content-width)) / 2));
+  padding: 4.4rem 0 5rem;
+}
+.chapter-header { margin-bottom: 2.5rem; }
+.eyebrow { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+h1, h2, h3 { color: var(--ink); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+h1 { max-width: 19ch; margin: 0 0 1.1rem; font-size: clamp(2rem, 5vw, 3.35rem); letter-spacing: -.035em; }
+h2 { margin: 3.3rem 0 1rem; padding-top: .25rem; border-top: 1px solid var(--line); font-size: clamp(1.45rem, 3vw, 2rem); }
+h3 { margin: 2rem 0 .65rem; font-size: 1.18rem; }
+p { margin: 0 0 1.1rem; }
+.lead { max-width: 66ch; margin-bottom: 1.5rem; color: var(--muted); font-size: 1.08rem; }
+.chapter-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.meta-card, .learning-box { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: 0 5px 22px rgba(0, 0, 0, .035); }
+.meta-card strong, .learning-box strong { display: block; margin-bottom: .3rem; color: var(--accent-strong); font-size: .78rem; letter-spacing: .06em; }
+.meta-card span { color: var(--muted); font-size: .88rem; }
+.learning-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .85rem; margin: 1.2rem 0 2.5rem; }
+.learning-box { margin: 0; }
+.learning-box h2 { margin: 0 0 .55rem; padding: 0; border: 0; font-size: 1rem; }
+.learning-box ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.learning-box li { margin: .25rem 0; color: var(--muted); font-size: .88rem; }
+.callout { margin: 1.35rem 0 1.6rem; padding: 1rem 1.1rem 1rem 1.25rem; border-left: 5px solid; border-radius: .2rem .8rem .8rem .2rem; background: var(--surface); }
+.callout strong { display: block; margin-bottom: .3rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.info { border-color: var(--info-line); background: var(--info-bg); }
+.callout.warning { border-color: var(--warning-line); background: var(--warning-bg); }
+.callout.danger { border-color: var(--danger-line); background: var(--danger-bg); }
+.callout.tip { border-color: var(--tip-line); background: var(--tip-bg); }
+.term { border-bottom: 2px dotted var(--accent); font-weight: 700; }
+.table-wrap { max-width: 100%; margin: 1.25rem 0 1.7rem; overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+table { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .7rem .85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--accent-strong); background: var(--surface-2); font-weight: 800; }
+tr:last-child td { border-bottom: 0; }
+ul, ol { margin: .7rem 0 1.25rem; padding-left: 1.45rem; }
+li { margin: .38rem 0; }
+blockquote { margin: 1.4rem 0; padding: .75rem 1.1rem; border-left: 4px solid var(--accent); color: var(--muted); background: var(--surface-2); }
+.code-wrap { position: relative; max-width: 100%; margin: 1.35rem 0 1.75rem; overflow: hidden; border: 1px solid #3f5950; border-radius: .8rem; background: var(--code-bg); box-shadow: var(--shadow); }
+.code-toolbar { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; padding: .35rem .55rem .35rem .85rem; border-bottom: 1px solid rgba(255, 255, 255, .13); color: #bcd2c6; background: rgba(255, 255, 255, .055); font-size: .75rem; }
+.code-language { font-weight: 800; letter-spacing: .08em; }
+.copy-button { padding: .25rem .55rem; border: 1px solid rgba(255, 255, 255, .3); border-radius: .45rem; color: #e8f4eb; background: transparent; cursor: pointer; }
+.copy-button:hover, .copy-button:focus-visible { background: rgba(255, 255, 255, .14); }
+.code-scroll { max-width: 100%; overflow-x: auto; }
+pre.code-block { margin: 0; min-width: max-content; padding: .9rem 0 1rem; color: var(--code-ink); font: .86rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+pre code { display: block; }
+.code-line { display: flex; min-height: 1.65em; padding-right: 1rem; }
+.code-line-number { flex: 0 0 3.25rem; padding-right: .8rem; color: #6e8a7e; text-align: right; user-select: none; }
+.code-line-text { display: block; padding-left: .2rem; white-space: pre; }
+.hl-keyword { color: var(--code-keyword); font-weight: 700; }
+.hl-string { color: var(--code-string); }
+.hl-comment { color: var(--code-comment); font-style: italic; }
+.hl-number { color: var(--code-number); }
+.hl-operator { color: var(--code-operator); }
+.hl-function { color: var(--code-function); }
+.hl-decorator { color: #f0a9dc; }
+.glossary { margin-top: 3.5rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface-2); }
+.glossary h2 { margin-top: 0; border: 0; }
+.glossary dl { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: .65rem 1rem; margin: 0; }
+.glossary dt { color: var(--accent-strong); font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+.checks { margin-top: 3rem; }
+.checks h2 { margin-bottom: .8rem; }
+.check-item { margin: .7rem 0; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); }
+.check-item summary { cursor: pointer; font-weight: 700; }
+.answer { margin: .65rem 0 0; padding: .7rem .9rem; color: var(--muted); background: var(--surface-2); }
+.chapter-nav-bottom { display: flex; gap: 1rem; justify-content: space-between; margin-top: 4rem; padding-top: 1.3rem; border-top: 2px solid var(--line); }
+.chapter-nav-bottom a { display: block; max-width: 48%; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-decoration: none; }
+.chapter-nav-bottom a:last-child { margin-left: auto; text-align: right; }
+.chapter-nav-bottom small { display: block; margin-bottom: .2rem; color: var(--muted); }
+.chapter-nav-bottom strong { color: var(--accent-strong); }
+.page-top { display: inline-block; margin-top: 2.2rem; font-size: .85rem; }
+@media (max-width: 1100px) { :root { --sidebar-width: 16rem; } main { margin-left: calc(var(--sidebar-width) + 1.6rem); } }
+@media (max-width: 900px) {
+  .menu-toggle { display: block; }
+  .sidebar { width: min(19rem, 88vw); transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow); }
+  body.drawer-open .sidebar { transform: translateX(0); }
+  .sidebar-close { display: block; font-size: 1.5rem; }
+  .drawer-backdrop { position: fixed; z-index: 25; inset: 0; background: rgba(0, 0, 0, .45); }
+  body.drawer-open .drawer-backdrop { display: block; }
+  main { width: min(var(--content-width), calc(100% - 2rem)); margin: 0 auto; padding-top: 5.1rem; }
+  .theme-toggle { top: .9rem; right: .8rem; }
+}
+@media (max-width: 650px) {
+  .chapter-meta, .learning-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2.1rem; }
+  .glossary dl { display: block; }
+  .glossary dt { margin-top: .9rem; }
+  .glossary dd { margin-top: .15rem; }
+  .chapter-nav-bottom { display: grid; }
+  .chapter-nav-bottom a { max-width: none; }
+  .chapter-nav-bottom a:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #111; --muted: #333; --line: #bbb; --code-bg: #f5f5f5; --code-ink: #111; }
+  .sidebar, .menu-toggle, .theme-toggle, .drawer-backdrop, .copy-button, .page-top { display: none !important; }
+  main { width: 100%; margin: 0; padding: 0; }
+  .chapter-header { padding-top: 0; }
+  .code-wrap { border: 1px solid #777; box-shadow: none; break-inside: avoid; }
+  pre.code-block { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+  .code-line { display: block; }
+  .code-line-number { display: none; }
+  .code-line-text { white-space: pre-wrap; }
+  a { color: #111; }
+  .chapter-nav-bottom { display: none; }
+}
+
+</style>
+</head>
+<body data-page="04-tlaplus-examples">
+<a class="skip-link" href="#main-content">本文へスキップ</a>
+<button id="menu-toggle" class="menu-toggle" type="button" aria-label="章目次を開く" aria-expanded="false" aria-controls="sidebar">☰</button>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="ダークテーマに切り替える" aria-pressed="false">☾ ダーク</button>
+<aside id="sidebar" class="sidebar" aria-label="章目次">
+<button id="sidebar-close" class="sidebar-close" type="button" aria-label="章目次を閉じる">×</button>
+<a class="brand" href="index.html">形式手法とテスト技法<small>Lean 4 / TLA+ / PBT 実務教科書</small></a>
+<div class="nav-label">CHAPTERS</div>
+<nav class="chapter-nav" aria-label="全章">
+<a class="chapter-link" data-page="index" href="index.html">表紙・読み方</a>
+<a class="chapter-link" data-page="00-overview" href="00-overview.html">00　3手法の地図</a>
+<a class="chapter-link" data-page="01-lean-basics" href="01-lean-basics.html">01　Lean 4 基礎</a>
+<a class="chapter-link" data-page="02-lean-examples" href="02-lean-examples.html">02　Lean 実践サンプル</a>
+<a class="chapter-link" data-page="03-tlaplus-basics" href="03-tlaplus-basics.html">03　TLA+ 基礎</a>
+<a class="chapter-link" data-page="04-tlaplus-examples" href="04-tlaplus-examples.html">04　TLA+ 実践サンプル</a>
+<a class="chapter-link" data-page="05-pbt-basics" href="05-pbt-basics.html">05　PBT 基礎</a>
+<a class="chapter-link" data-page="06-pbt-examples" href="06-pbt-examples.html">06　PBT 実践サンプル</a>
+<a class="chapter-link" data-page="07-combining" href="07-combining.html">07　3手法を組み合わせる</a>
+</nav>
+<div class="nav-label">ON THIS PAGE</div>
+<nav id="page-outline" class="page-outline" aria-label="このページの見出し"></nav>
+</aside>
+<div class="drawer-backdrop" aria-hidden="true"></div>
+<main id="main-content">
+<header class="chapter-header"><p class="eyebrow">Chapter 04 · 形式手法とテスト技法</p><h1>TLA+ 実践サンプル</h1><p>Web・ゲーム・物理/数学を、状態変数・アクション・不変条件として読み解きます。</p><div class="chapter-meta"><div class="meta-card"><strong>対象</strong><span>03章でInit・Next・Specを読んだ人</span></div><div class="meta-card"><strong>成果物</strong><span>抽象化の境界を説明できるモデルを作る</span></div><div class="meta-card"><strong>読む目安</strong><span>80〜110分</span></div></div></header><section class="learning-grid" aria-label="章の案内"><div class="learning-box"><h2>この章で学ぶこと</h2><ul>
+<li>在庫・失効・冪等性をモデル化する</li>
+<li>ゲームの手番・進行・取引を検査する</li>
+<li>物理量と抽象化の境界を記録する</li>
+</ul></div><div class="learning-box"><h2>前提知識</h2><ul>
+<li>TLA+のアクションと不変条件</li>
+<li>Safety・Liveness・公平性</li>
+<li>反例トレースの読み方</li>
+</ul></div><div class="learning-box"><h2>所要時間の目安</h2><p>Web・ゲーム・物理から各一例を選び、反例テンプレートを埋めます。</p></div></section><section id="setup">
+<h2 id="setup-heading">実例を読むための縮約</h2>
+<p>この章では、Web、ゲーム、物理・数学の状態をTLA+でモデル化します。<dfn>抽象化</dfn>とは、失敗モードに必要な状態だけを残して、実サービス全体を小さなモデルへ縮約することです。縮約したものと落としたものを毎回明記してください。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>java -cp tla2tools.jar tlc2.TLC \
+  -config Inventory.cfg Inventory.tla</code></pre></div>
+</div>
+<p>モデルは、まず2ユーザー・容量1・短い履歴で検査します。反例を読める大きさにしてから、決済失敗、キャンセル、キャッシュ、切断を段階的に追加します。</p>
+<aside class="callout info" role="note"><strong>実例ごとの三つの問い</strong><p>何を保証したいか。なぜそれが必要か。破れると何が起きるか。コードの直前にこの三つを置くと、モデルの目的が実装の写経へ流れません。</p></aside>
+</section>
+<section id="web-inventory">
+<h2 id="web-inventory-heading">Web例1：在庫引き当てと二重購入</h2>
+<p>保証したいのは、在庫が負にならず、購入済みの利用者が同じ商品を二重に確定しないことです。破れると欠品、返金、会計帳簿との不一致が起きます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Inventory ----
+CONSTANT Users, InitialStock
+VARIABLE stock, orders
+
+Init == /\ stock = InitialStock
+        /\ orders = [u \in Users |-&gt; "none"]
+
+Purchase(u) == /\ orders[u] = "none"
+                /\ stock &gt; 0
+                /\ stock' = stock - 1
+                /\ orders' = [orders EXCEPT ![u] = "paid"]
+
+Next == \E u \in Users : Purchase(u)
+
+TypeOK == /\ stock \in Nat
+          /\ orders \in [Users -&gt; {"none", "paid"}]
+
+NoDouble == \A u \in Users : orders[u] = "none" \/ orders[u] = "paid"
+Conserve == stock + Cardinality({u \in Users : orders[u] = "paid"}) = InitialStock
+
+Spec == Init /\ [][Next]_&lt;&lt;stock, orders&gt;&gt;
+========================================</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLC設定</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users = {"alice", "bob"}
+CONSTANT InitialStock = 1
+INVARIANT TypeOK
+INVARIANT NoDouble
+INVARIANT Conserve</code></pre></div>
+</div>
+<p>`Conserve`は購入一件につき在庫を一つ消費する保存不変量です。決済失敗やキャンセルを追加するなら、予約・支払い・返金を状態として分けます。一つの`Purchase`に押し込むと、どの段階で在庫を戻すかが曖昧になります。</p>
+<aside class="callout danger" role="note"><strong>一アクションのatomicityを本番で再確認</strong><p>モデルのPurchaseは判定・減算・注文更新が一つです。実装がSELECT、外部決済、UPDATEの三段階なら、同じ原子性を持たないので失敗アクションとPBTの競合テストを追加します。</p></aside>
+</section>
+<section id="web-session">
+<h2 id="web-session-heading">Web例2：セッションとトークン失効</h2>
+<p>保証したいのは、失効済みトークンが再び有効にならないことです。破れると、ログアウトや強制失効がキャッシュ・認証ミドルウェアを通り抜けます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Session ----
+CONSTANT Tokens
+VARIABLE status
+
+Init == status = [t \in Tokens |-&gt; "valid"]
+
+Revoke(t) == /\ status[t] = "valid"
+             /\ status' = [status EXCEPT ![t] = "revoked"]
+
+Use(t) == /\ status[t] = "valid"
+          /\ UNCHANGED status
+
+Next == \E t \in Tokens : Revoke(t) \/ Use(t)
+TypeOK == status \in [Tokens -&gt; {"valid", "revoked"}]
+RevokedNeverValid == \A t \in Tokens :
+  status[t] = "revoked" =&gt; status[t] # "valid"
+
+Spec == Init /\ [][Next]_status
+================================</code></pre></div>
+</div>
+<p>`Use`を成功・失敗の観測変数として持ちたいなら、監査ログや応答状態を追加します。キャッシュ層が古い値を返す場合、`cache`を別変数にして、stale readを許す仕様と禁止する仕様を比較します。</p>
+<aside class="callout warning" role="note"><strong>「失効した」と「使えない」を分ける</strong><p>保存状態がrevokedでも、別のAPI経路が古いセッションを使うなら、モデルの状態と実装の観測点がずれています。認証判定の全経路を契約へ含めます。</p></aside>
+</section>
+<section id="web-idempotency">
+<h2 id="web-idempotency-heading">Web例3：リトライと冪等性</h2>
+<p>同じidempotency keyが何度届いても、残高や在庫への効果が一度だけであることを保証します。破れるとタイムアウト後の再送で二重請求が起きます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Idempotency ----
+CONSTANT Keys
+VARIABLE applied, balance
+
+Init == /\ applied = {}
+        /\ balance = 0
+
+Apply(k) == /\ k \in Keys
+            /\ k \notin applied
+            /\ applied' = applied \cup {k}
+            /\ balance' = balance + 1
+
+Retry(k) == /\ k \in applied
+            /\ UNCHANGED &lt;&lt;applied, balance&gt;&gt;
+
+Next == \E k \in Keys : Apply(k) \/ Retry(k)
+AtMostOnce == balance = Cardinality(applied)
+Spec == Init /\ [][Next]_&lt;&lt;applied, balance&gt;&gt;
+=============================================</code></pre></div>
+</div>
+<p>ここでの`applied`は抽象的な集合です。本番のDB一意制約、トランザクション境界、同じキーで異なるpayloadが届いたときの契約は含みません。payloadを状態に加えると、「同じキーなら同じ内容」という性質も検査できます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+ / payload</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>VARIABLE requests, applied
+
+Apply(k, payload) == /\ k \notin DOMAIN applied
+                       /\ applied' =
+                            [applied EXCEPT ![k] = payload]
+                       /\ requests' = requests</code></pre></div>
+</div>
+<p>キーの再利用を拒否するのか、元の結果を返すのか、409を返すのかはAPI仕様です。安全性として共通なのは、効果が一度だけという点です。</p>
+</section>
+<section id="web-cache">
+<h2 id="web-cache-heading">Web例4：キャッシュ整合性</h2>
+<p>「読める」と「最新版である」を分けます。強い整合性を要求するならcacheとoriginが一致すること、stale readを許すなら古さの上限や収束を別の性質にします。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Cache ----
+CONSTANT Values
+VARIABLE origin, cache, version
+
+Init == /\ origin = Values[1]
+        /\ cache = origin
+        /\ version = 0
+
+Read == /\ cache' = cache
+        /\ UNCHANGED &lt;&lt;origin, version&gt;&gt;
+
+Write(v) == /\ v \in Values
+            /\ origin' = v
+            /\ cache' = v
+            /\ version' = version + 1
+
+StaleRead == /\ cache' = cache
+             /\ UNCHANGED &lt;&lt;origin, version&gt;&gt;
+
+Next == Read \/ (\E v \in Values : Write(v)) \/ StaleRead
+Coherent == cache = origin
+Spec == Init /\ [][Next]_&lt;&lt;origin, cache, version&gt;&gt;
+===============================================</code></pre></div>
+</div>
+<p>`StaleRead`を許せば`Coherent`は違反します。それがバグなのかeventual consistencyの契約なのかは、利用者が観測できる古さ、更新後の読み取り、無効化失敗の仕様で決まります。</p>
+<aside class="callout info" role="note"><strong>抽象化の効き目</strong><p>キャッシュを値一つにしたモデルはTTL・容量・ネットワークを表しませんが、読み書きの順序と「最新版」の定義をレビューできます。失った細部はPBTのfake clockや統合テストへ渡します。</p></aside>
+</section>
+<section id="game-turn">
+<h2 id="game-turn-heading">ゲーム例1：ターン制の手番</h2>
+<p>現在の手番以外のプレイヤーが操作できないことを保証します。破れると同時入力の勝敗や得点が不正になります。プレイヤーが二人より多い場合は、次のプレイヤーを選ぶ関数を明示します。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Turns ----
+CONSTANT Players
+VARIABLE turn, moves
+
+Init == /\ turn = Players[1]
+        /\ moves = 0
+
+Play(p) == /\ p = turn
+           /\ moves' = moves + 1
+           /\ turn' = IF turn = Players[1]
+                      THEN Players[2]
+                      ELSE Players[1]
+
+TypeOK == /\ turn \in Players
+          /\ moves \in Nat
+Next == \E p \in Players : Play(p)
+Spec == Init /\ [][Next]_&lt;&lt;turn, moves&gt;&gt;
+==============================================</code></pre></div>
+</div>
+<p>手番だけでなく、入力が接続中か、ゲームが終了していないか、同じ操作IDが未処理かも状態です。最初のモデルは手番のSafetyに集中し、拡張時に新しい変数と不変量を追加します。</p>
+</section>
+<section id="game-match">
+<h2 id="game-match-heading">ゲーム例2：マッチングの進行</h2>
+<p>二人が待っているなら、いつかペアになるというLivenessを考えます。Safetyだけなら「待ち集合が壊れない」しか分かりません。公平性なしでは、Joinばかり選ばれてPairが永遠に選ばれない反例があり得ます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Match ----
+CONSTANT Players
+VARIABLE waiting, matched
+
+Init == /\ waiting = {}
+        /\ matched = {}
+
+Join(p) == /\ p \in Players
+           /\ p \notin waiting
+           /\ p \notin matched
+           /\ waiting' = waiting \cup {p}
+           /\ UNCHANGED matched
+
+Pair(a, b) == /\ a \in waiting
+              /\ b \in waiting
+              /\ a # b
+              /\ matched' = matched \cup {{a, b}}
+              /\ waiting' = waiting \ {a, b}
+
+Next == (\E p \in Players : Join(p))
+     \/ (\E a, b \in Players : Pair(a, b))
+
+EventuallyPair == []((Cardinality(waiting) = 2)
+  =&gt; &lt;&gt;(Cardinality(waiting) &lt; 2))
+
+Spec == Init /\ [][Next]_&lt;&lt;waiting, matched&gt;&gt;
+============================================</code></pre></div>
+</div>
+<p>実際のTLCでlivenessを検査するなら、アクションが有効なのに永遠に無視されないという公平性をモデルへ加えます。workerの公平なスケジュール、キューの順序、切断を一つずつ仮定として記録します。</p>
+<aside class="callout warning" role="note"><strong>公平性は実装の魔法ではない</strong><p>WFを付けると不公平な実行を除外できますが、実装のスケジューラがその仮定を満たすかは別の証拠です。メトリクス、タイムアウト、負荷試験を残します。</p></aside>
+</section>
+<section id="game-trade">
+<h2 id="game-trade-heading">ゲーム例3：アイテム取引の原子性</h2>
+<p>送信者からアイテムを削除し、受信者へ追加する操作を一つのアクションにします。半分だけ移った状態を許さないことが保証です。破れるとアイテム消失や複製が起きます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Trade ----
+CONSTANT Players, Items
+VARIABLE inventory, offers
+
+Init == /\ inventory = [p \in Players |-&gt; {}]
+        /\ offers = {}
+
+Offer(a, b, i) == /\ a # b
+                  /\ i \in inventory[a]
+                  /\ offers' = offers \cup
+                       {[from |-&gt; a, to |-&gt; b, item |-&gt; i]}
+                  /\ UNCHANGED inventory
+
+Accept(o) == /\ o \in offers
+             /\ o.item \in inventory[o.from]
+             /\ inventory' = [inventory EXCEPT
+                    ![o.from] = @ \ {o.item},
+                    ![o.to] = @ \cup {o.item}]
+             /\ offers' = offers \ {o}
+
+Next == (\E a, b \in Players, i \in Items : Offer(a,b,i))
+     \/ (\E o \in offers : Accept(o))
+
+Spec == Init /\ [][Next]_&lt;&lt;inventory, offers&gt;&gt;
+===============================================</code></pre></div>
+</div>
+<p>実装が二つのDB書き込みなら、モデルの原子性はありません。トランザクション、イベントソーシング、補償処理のどれを採用するかを仕様にし、途中状態を観測できるかをPBTと統合テストで検査します。</p>
+</section>
+<section id="pluscal-raw">
+<h2 id="pluscal-raw-heading">PlusCalと素のTLA+を比較する</h2>
+<div class="code-wrap" data-lang="pluscal">
+<div class="code-toolbar"><span class="code-language">PlusCal</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE LockPlusCal ----
+VARIABLE lock
+
+(* --algorithm Mutex
+variables lock = "free";
+process (P \in {"A", "B"})
+begin
+Acquire:
+  await lock = "free";
+  lock := self;
+Critical:
+  skip;
+Release:
+  lock := "free";
+end process;
+end algorithm; *)
+================================</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE LockRaw ----
+CONSTANT Proc
+VARIABLE owner
+
+Init == owner = "free"
+Acquire(p) == /\ owner = "free" /\ owner' = p
+Release(p) == /\ owner = p /\ owner' = "free"
+Next == \E p \in Proc : Acquire(p) \/ Release(p)
+MutualExclusion == owner = "free" \/ owner \in Proc
+Spec == Init /\ [][Next]_owner
+================================</code></pre></div>
+</div>
+<p>PlusCalは制御フロー、素のTLA+は状態関係を直接読ませます。変換後にAcquireの原子性、Releaseの所有者条件、process集合の定数設定を確認します。どちらもコメントや見た目だけでは証拠になりません。</p>
+</section>
+<section id="physics-sum">
+<h2 id="physics-sum-heading">物理・数学例1：離散化した保存量</h2>
+<p>離散積分の途中値が、閉形式の和と一致することを検査します。破れると、積分器の添字や更新順がずれます。連続系の誤差や浮動小数は別モデル・PBTの責任です。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE DiscreteSum ----
+CONSTANT N
+VARIABLE i, total
+
+Init == /\ i = 0 /\ total = 0
+Step == /\ i &lt; N
+        /\ i' = i + 1
+        /\ total' = total + i'
+
+Done == i = N
+Invariant == total = i * (i - 1) / 2
+Next == Step
+Spec == Init /\ [][Next]_&lt;&lt;i, total&gt;&gt;
+==============================================</code></pre></div>
+</div>
+<p>`N`を自然数として与え、整数除算の意味を確認します。TLCは浮動小数の丸めを自動的に再現しないため、近似誤差の上限は実装側で別に検査します。</p>
+</section>
+<section id="physics-resource">
+<h2 id="physics-resource-heading">物理・数学例2：資源保存</h2>
+<p>複数エージェント間で資源を移動しても総量が保存されることを保証します。破れると会計残高や物理量が生成・消滅します。各エージェントの上限を保証するなら、別の不変条件が必要です。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Conservation ----
+EXTENDS Naturals
+
+CONSTANT Capacity, Agents
+VARIABLE resource
+
+Init == resource = [a \in Agents |-&gt; Capacity]
+
+Move(a, b) == /\ a # b
+              /\ resource[a] &gt; 0
+              /\ resource' = [resource EXCEPT
+                    ![a] = @ - 1,
+                    ![b] = @ + 1]
+
+Total == Sum({resource[a] : a \in Agents})
+Invariant == Total = Cardinality(Agents) * Capacity
+Next == \E a, b \in Agents : Move(a, b)
+Spec == Init /\ [][Next]_resource
+===============================================</code></pre></div>
+</div>
+<p>総量保存は一ステップの代数で説明できますが、マイナス禁止、上限、同時移動の公平性は別の性質です。どの不変量を「主」とし、どれを補助にするかを命名します。</p>
+</section>
+<section id="physics-round">
+<h2 id="physics-round-heading">物理・数学例3：ラウンドロビンの公平性</h2>
+<p>相互排除と順番の進行を一つのモデルで考えます。下の`Proc`は説明用のシーケンスです。実際のモデルでは、次要素を選ぶ関数を厳密に定義し、空集合や切断を扱います。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE RoundRobin ----
+EXTENDS Sequences
+
+CONSTANT Proc
+VARIABLE turn, inCS
+
+Init == /\ turn = Proc[1] /\ inCS = {}
+
+Enter(p) == /\ p = turn
+            /\ p \notin inCS
+            /\ inCS' = inCS \cup {p}
+            /\ UNCHANGED turn
+
+Leave(p) == /\ p \in inCS
+            /\ inCS' = inCS \ {p}
+            /\ UNCHANGED turn
+
+MutualExclusion == Cardinality(inCS) &lt;= 1
+Next == \E p \in Proc : Enter(p) \/ Leave(p)
+Spec == Init /\ [][Next]_&lt;&lt;turn, inCS&gt;&gt;
+==============================================</code></pre></div>
+</div>
+<p>次のturnへ進むアクション、接続中のプロセス、待ち時間の上限を追加するとLivenessを検査できます。モデルで表していないインデックス操作を「完全なTLA+コード」と誤認させないため、教育用の範囲を明記します。</p>
+<aside class="callout info" role="note"><strong>動かない断片を混ぜない</strong><p>実際にTLCへ渡すファイルには、EXTENDS、定数、Init、Next、Spec、検査対象を揃えます。疑似コードを示す場合は、どの部分が未実装かをラベルで明記します。</p></aside>
+</section>
+<section id="boundary">
+<h2 id="boundary-heading">モデルの境界を表にする</h2>
+<div class="table-wrap"><table><thead><tr><th>抽象化</th><th>得られるもの</th><th>失うもの</th><th>引き渡し先</th></tr></thead><tbody><tr><td>決済を一アクション</td><td>二重請求の順序</td><td>分断・部分成功</td><td>PBTのfake・統合</td></tr><tr><td>キャッシュを値一つ</td><td>stale readの論理</td><td>TTL・容量・再接続</td><td>時計注入テスト</td></tr><tr><td>プレイヤー二人</td><td>手番競合</td><td>大規模マッチング</td><td>負荷・モデル拡張</td></tr><tr><td>離散時間</td><td>保存量・添字</td><td>連続系の丸め</td><td>PBTの許容誤差</td></tr><tr><td>集合で履歴</td><td>所有権の総量</td><td>順序・重複</td><td>シーケンスモデル</td></tr></tbody></table></div>
+<p>境界は弱点の告白ではなく、証拠の設計図です。TLCの成功をCIログに残すときは、定数と抽象化の表も一緒に保存します。</p>
+</section>
+<section id="extensions">
+<h2 id="extensions-heading">実例から広げる課題</h2>
+<h3 id="extend-cancel">Web：キャンセルを追加する</h3>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>Cancel(u) == /\ orders[u] = "reserved"
+             /\ orders' = [orders EXCEPT ![u] = "cancelled"]
+             /\ stock' = stock + 1</code></pre></div>
+</div>
+<p>支払い前のキャンセルと支払い後の返金は意味が違います。状態をreserved、paid、refundedなどに分け、保存不変量と台帳を別に置きます。</p>
+<h3 id="extend-disconnect">ゲーム：切断を追加する</h3>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>Disconnect(p) == /\ p \in Players
+                 /\ connected' = connected \ {p}
+                 /\ UNCHANGED turn</code></pre></div>
+</div>
+<p>接続がないプレイヤーへ手番を渡さないSafetyと、接続中のプレイヤーへいつか進むLivenessを分けます。切断・再接続・タイムアウトの順序が反例を変えます。</p>
+<h3 id="extend-report">反例を実装へ渡す</h3>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">反例テンプレート</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>モデル名:
+定数:
+違反した性質:
+状態列:
+競合したアクション:
+対応するAPI:
+実装のatomicity:
+PBTにする操作列:</code></pre></div>
+</div>
+<p>反例を削除せず、仕様変更で無効になった理由も記録します。過去の反例は、設計と実装が再び乖離していないかを測る回帰資産です。</p>
+</section>
+<section id="practice">
+<h2 id="practice-heading">モデル品質のチェックリスト</h2>
+<ul>
+<li>仕様の一アクションを日本語で説明できる。</li>
+<li>初期状態が空でなく、Nextに通常遷移がある。</li>
+<li>TypeOKと業務不変条件を分けている。</li>
+<li>更新しない変数にUNCHANGEDがある。</li>
+<li>定数が競合を消していない。</li>
+<li>順序が必要な履歴を集合にしていない。</li>
+<li>Livenessの公平性を実装の仮定として説明できる。</li>
+<li>抽象化で失った性質をPBTへ記録した。</li>
+</ul>
+<p>反例が十個出たら、同じ原因を分類してから修正します。モデル検査が終わらないときは、変数を増やす前に抽象化と観測範囲を見直します。</p>
+</section>
+<section id="summary">
+<h2 id="summary-heading">まとめ</h2>
+<p>Webでは原子性・冪等性・整合性、ゲームでは手番・所有権・進行、物理・数学では保存量・離散化・公平性をモデル化しました。TLA+の実例は、設計判断を短い反例へ変換する練習です。</p>
+<p>次章では、同じ失敗を実装の入力・操作列としてPBTへ渡します。</p>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>冪等性</dt><dd>同じ操作を繰り返しても効果が一度だけ、または結果が変わらない性質。</dd><dt>整合性</dt><dd>複数の状態や表現が、要求された関係を保つこと。</dd><dt>原子アクション</dt><dd>途中状態を分割せず一つの遷移として扱う操作。</dd><dt>stale read</dt><dd>キャッシュなどから古い値を読むこと。</dd><dt>補償処理</dt><dd>分割された処理の一部が成功した後、意味を戻すための処理。</dd><dt>抽象化境界</dt><dd>モデル化した範囲と、別の証拠へ渡した範囲の境目。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：在庫モデルのConserveは何を保証しますか。</summary><div class="answer">購入済みの件数と残在庫の合計が初期在庫に等しいことです。</div></details><details class="check-item"><summary>問2：キャッシュモデルでStaleReadを許すと何が変わりますか。</summary><div class="answer">cacheとoriginの一致は常に成立しなくなり、最新版性を別の性質にする必要があります。</div></details><details class="check-item"><summary>問3：ゲームのLivenessを検査するのに公平性が必要になる理由は何ですか。</summary><div class="answer">Pairや次の手番が有効でも永遠に選ばれない実行を除外するためです。</div></details><details class="check-item"><summary>問4：物理の離散TLA+モデルが浮動小数の丸めを保証しないのはなぜですか。</summary><div class="answer">整数・有限状態の抽象モデルであり、実装の数値表現や誤差を含めていないためです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="03-tlaplus-basics.html"><small>← 前の章</small><strong>03　TLA+ 基礎</strong></a><a href="05-pbt-basics.html"><small>次の章 →</small><strong>05　PBT 基礎</strong></a></nav>
+<a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
+</main>
+<script>
+
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var body = document.body;
+
+  function readTheme() {
+    try { return localStorage.getItem("formal-methods-theme"); }
+    catch (error) { return null; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem("formal-methods-theme", theme); }
+    catch (error) { return; }
+  }
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+    else root.removeAttribute("data-theme");
+    var toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+    var dark = theme === "dark" ||
+      (theme !== "light" && window.matchMedia &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    toggle.textContent = dark ? "☀ ライト" : "☾ ダーク";
+    toggle.setAttribute("aria-label", dark ? "ライトテーマに切り替える" : "ダークテーマに切り替える");
+    toggle.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+  var storedTheme = readTheme();
+  applyTheme(storedTheme);
+
+  var themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = current === "dark" || (!current && prefersDark) ? "light" : "dark";
+    saveTheme(next);
+    applyTheme(next);
+  });
+
+  var menuToggle = document.getElementById("menu-toggle");
+  var closeButton = document.getElementById("sidebar-close");
+  var backdrop = document.querySelector(".drawer-backdrop");
+  function closeDrawer() {
+    body.classList.remove("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+  function openDrawer() {
+    body.classList.add("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", function () {
+    body.classList.contains("drawer-open") ? closeDrawer() : openDrawer();
+  });
+  if (closeButton) closeButton.addEventListener("click", closeDrawer);
+  if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".chapter-link").forEach(function (link) {
+    if (link.getAttribute("data-page") === body.getAttribute("data-page")) {
+      link.classList.add("is-current");
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", closeDrawer);
+  });
+
+  var outline = document.getElementById("page-outline");
+  var headings = Array.prototype.slice.call(document.querySelectorAll("main h2[id], main h3[id]"));
+  if (outline) headings.forEach(function (heading) {
+    var link = document.createElement("a");
+    link.href = "#" + heading.id;
+    link.className = "outline-link level-" + heading.tagName.substring(1);
+    link.textContent = heading.textContent;
+    outline.appendChild(link);
+  });
+  function markOutline(id) {
+    if (!outline) return;
+    outline.querySelectorAll("a").forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
+    });
+  }
+  if ("IntersectionObserver" in window && headings.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) markOutline(entry.target.id);
+      });
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    headings.forEach(function (heading) { observer.observe(heading); });
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var languageSets = {
+    lean: {
+      keywords: "theorem lemma def example by fun match with inductive structure namespace where let in if then else type class instance deriving open import",
+      tactics: "intro exact apply constructor cases induction simp simpa rw rfl omega ring linarith norm_num decide aesop have show calc unfold split",
+    },
+    tla: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec TypeOK Invariant Safety Liveness TRUE FALSE UNCHANGED IF THEN ELSE LET IN DOMAIN SUBSET Cardinality Len Append Seq INSTANCE ASSUME THEOREM PROVE WF SF process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    pluscal: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    python: {
+      keywords: "and as assert async await break case class continue def del elif else except finally for from if import in is lambda match nonlocal not or pass raise return try while with yield True False None",
+      tactics: "",
+    },
+    typescript: {
+      keywords: "as async await break case catch class const debugger default delete do else export extends false finally for from function if implements import in instanceof interface let new null of package private protected public return static super switch this throw true try type typeof var void while with yield",
+      tactics: "",
+    },
+    haskell: {
+      keywords: "case class data default deriving do else if import in let module new of then type where forall",
+      tactics: "",
+    },
+    shell: {
+      keywords: "if then else fi for in do done case esac function export cd printf echo",
+      tactics: "",
+    }
+  };
+  function hasWord(set, token) {
+    return set && set.split(/\s+/).indexOf(token) !== -1;
+  }
+  function classifyToken(token, language) {
+    var set = languageSets[language] || languageSets.python;
+    if (token.charCodeAt(0) === 92 && token.charAt(1) === "*") return "hl-comment";
+    if (token.indexOf("--") === 0 || token.indexOf("#") === 0 || token.indexOf("//") === 0 || token.indexOf("/*") === 0 || token.indexOf("/-") === 0 || token.indexOf("(*") === 0 || token.indexOf("\\\\*") === 0) return "hl-comment";
+    if (/^(["'\x60])/.test(token)) return "hl-string";
+    if (/^\d/.test(token)) return "hl-number";
+    if (language === "python" && /^@/.test(token)) return "hl-decorator";
+    if (hasWord(set.tactics, token)) return "hl-function";
+    if (hasWord(set.keywords, token)) return "hl-keyword";
+    var operator = token === "<>" || token === "[]" || token === "~>" || token === "=>" || token === "->" || token === "<-" || token === ":=" || token === "===" || token === "!==" || token === "==" || token === "!=" || token === "<=" || token === ">=" || token === "&&" || token === "||" || token === "++" || token === "--" || token === "=" || token === "~" || token === "#" || token === "'" || token === "|" || token === ":" || token === "<" || token === ">" || token === "+" || token === "*" || token === "/" || token === "-" || token.indexOf("\\\\") !== -1;
+    if (token.charCodeAt(0) === 92 || token.charCodeAt(token.length - 1) === 92) return "hl-operator";
+    if (operator) return "hl-operator";
+    if (/^[A-Za-z_][A-Za-z0-9_']*$/.test(token) && /^[A-Z]/.test(token)) return "hl-function";
+    return "";
+  }
+  function highlight(source, language) {
+    var pattern = /(\\\*[^\n]*|--[^\n]*|#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/-[\s\S]*?-\*|\(\*[\s\S]*?\*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\x60(?:\\.|[^\x60\\])*\x60|\b\d+(?:\.\d+)?\b|@[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_']*|\/\\|\\\/|<>|\[\]|~>|=>|->|<-|:=|===|!==|==|!=|<=|>=|&&|\|\||\+\+|--|[=~#'|:<>+*\/-])/gm;
+    return source.replace(pattern, function (token) {
+      var kind = classifyToken(token, language);
+      return kind ? '<span class="' + kind + '">' + escapeHTML(token) + "</span>" : escapeHTML(token);
+    });
+  }
+  function decorateCode(wrapper) {
+    var code = wrapper.querySelector("code");
+    if (!code) return;
+    var raw = code.textContent.replace(/\n$/, "");
+    wrapper.setAttribute("data-raw", raw);
+    var highlighted = highlight(raw, wrapper.getAttribute("data-lang") || "python");
+    code.innerHTML = highlighted.split("\n").map(function (line, index) {
+      return '<span class="code-line"><span class="code-line-number" aria-hidden="true">' +
+        (index + 1) + '</span><span class="code-line-text">' + (line || " ") +
+        "</span></span>";
+    }).join("\n");
+  }
+  document.querySelectorAll(".code-wrap").forEach(decorateCode);
+
+  function fallbackCopy(raw, done) {
+    var area = document.createElement("textarea");
+    area.value = raw;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try { document.execCommand("copy"); done(); }
+    finally { document.body.removeChild(area); }
+  }
+  function copyCode(button) {
+    var wrapper = button.closest(".code-wrap");
+    var raw = wrapper ? wrapper.getAttribute("data-raw") : "";
+    if (!raw) return;
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "コピー済み";
+      button.setAttribute("aria-label", "コードをコピーしました");
+      window.setTimeout(function () {
+        button.textContent = old;
+        button.setAttribute("aria-label", "コードだけをコピー");
+      }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(raw).then(done).catch(function () { fallbackCopy(raw, done); });
+    } else {
+      fallbackCopy(raw, done);
+    }
+  }
+  document.querySelectorAll(".copy-button").forEach(function (button) {
+    button.addEventListener("click", function () { copyCode(button); });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeDrawer();
+  });
+})();
+
+</script>
+</body>
+</html>

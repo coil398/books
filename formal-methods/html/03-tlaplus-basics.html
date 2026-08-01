@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="形式手法とテスト技法を実務のコード例で学ぶ日本語HTML教科書">
+<title>TLA+ / PlusCal / TLC の基礎 | 形式手法とテスト技法</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --surface-2: #eef2ed;
+  --surface-3: #e4ebe4;
+  --ink: #25312d;
+  --muted: #5d6c65;
+  --faint: #7b8b83;
+  --line: #d3ddd5;
+  --accent: #236b5a;
+  --accent-strong: #174e42;
+  --accent-soft: #d9eee6;
+  --link: #155e9a;
+  --shadow: 0 15px 45px rgba(37, 55, 45, .10);
+  --code-bg: #202c2a;
+  --code-ink: #e8f2eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #e5f1fb;
+  --info-line: #347daf;
+  --warning-bg: #fff3d8;
+  --warning-line: #b27a17;
+  --danger-bg: #fde4e5;
+  --danger-line: #b54a50;
+  --tip-bg: #e6f4e8;
+  --tip-line: #3b8450;
+  --focus: #d67500;
+  --sidebar-width: 18rem;
+  --content-width: 72ch;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18211f;
+    --surface: #202b28;
+    --surface-2: #263632;
+    --surface-3: #30433d;
+    --ink: #e7eee9;
+    --muted: #b6c7bf;
+    --faint: #91a79c;
+    --line: #40544d;
+    --accent: #7ad0b2;
+    --accent-strong: #a1e5ca;
+    --accent-soft: #24473e;
+    --link: #8dcaff;
+    --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+    --code-bg: #101817;
+    --code-ink: #e5f1eb;
+    --code-keyword: #9bd6ff;
+    --code-string: #f2c987;
+    --code-comment: #91aa9d;
+    --code-number: #dfb2ff;
+    --code-operator: #ff9eaa;
+    --code-function: #b8e7c0;
+    --info-bg: #183449;
+    --info-line: #82bce7;
+    --warning-bg: #4a3819;
+    --warning-line: #efc767;
+    --danger-bg: #4d252a;
+    --danger-line: #ef9ca1;
+    --tip-bg: #1d3b29;
+    --tip-line: #91d19b;
+    --focus: #ffc36d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18211f;
+  --surface: #202b28;
+  --surface-2: #263632;
+  --surface-3: #30433d;
+  --ink: #e7eee9;
+  --muted: #b6c7bf;
+  --faint: #91a79c;
+  --line: #40544d;
+  --accent: #7ad0b2;
+  --accent-strong: #a1e5ca;
+  --accent-soft: #24473e;
+  --link: #8dcaff;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+  --code-bg: #101817;
+  --code-ink: #e5f1eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #183449;
+  --info-line: #82bce7;
+  --warning-bg: #4a3819;
+  --warning-line: #efc767;
+  --danger-bg: #4d252a;
+  --danger-line: #ef9ca1;
+  --tip-bg: #1d3b29;
+  --tip-line: #91d19b;
+  --focus: #ffc36d;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+a { color: var(--link); text-underline-offset: .18em; }
+a:hover { color: var(--accent-strong); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip-link {
+  position: fixed; z-index: 50; top: .75rem; left: .75rem;
+  padding: .5rem .75rem; color: #fff; background: var(--accent-strong);
+  border-radius: .5rem; transform: translateY(-160%); transition: transform .2s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.menu-toggle {
+  display: none; position: fixed; z-index: 40; top: .9rem; left: .9rem;
+  width: 2.9rem; height: 2.9rem; border: 1px solid var(--line);
+  border-radius: .75rem; color: var(--ink); background: var(--surface);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.theme-toggle {
+  position: fixed; z-index: 35; top: 1rem; right: 1.25rem;
+  min-width: 6.7rem; padding: .45rem .7rem; border: 1px solid var(--line);
+  border-radius: 999px; color: var(--ink); background: var(--surface);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .08); cursor: pointer;
+}
+.sidebar {
+  position: fixed; z-index: 30; inset: 0 auto 0 0; display: flex;
+  width: var(--sidebar-width); flex-direction: column; padding: 1.25rem 1rem 1.5rem;
+  overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface);
+}
+.brand { display: block; margin: .15rem .5rem 1.15rem; color: var(--ink); font-size: .93rem; font-weight: 800; line-height: 1.45; text-decoration: none; letter-spacing: .04em; }
+.brand small { display: block; margin-top: .3rem; color: var(--muted); font-size: .72rem; font-weight: 500; letter-spacing: 0; }
+.chapter-nav, .page-outline { display: grid; gap: .18rem; }
+.nav-label { margin: 1rem .5rem .35rem; color: var(--faint); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chapter-link, .outline-link { display: block; border-left: 3px solid transparent; border-radius: 0 .45rem .45rem 0; color: var(--muted); text-decoration: none; }
+.chapter-link { padding: .46rem .55rem; font-size: .84rem; line-height: 1.4; }
+.outline-link { padding: .22rem .45rem; font-size: .76rem; line-height: 1.45; }
+.outline-link.level-3 { padding-left: 1.05rem; font-size: .72rem; }
+.chapter-link:hover, .outline-link:hover, .chapter-link.is-current, .outline-link.is-active { border-left-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.sidebar-close { display: none; align-self: flex-end; border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.drawer-backdrop { display: none; }
+main {
+  width: min(var(--content-width), calc(100% - 2rem));
+  margin: 0 auto 0 calc(var(--sidebar-width) + max(2rem, (100vw - var(--sidebar-width) - var(--content-width)) / 2));
+  padding: 4.4rem 0 5rem;
+}
+.chapter-header { margin-bottom: 2.5rem; }
+.eyebrow { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+h1, h2, h3 { color: var(--ink); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+h1 { max-width: 19ch; margin: 0 0 1.1rem; font-size: clamp(2rem, 5vw, 3.35rem); letter-spacing: -.035em; }
+h2 { margin: 3.3rem 0 1rem; padding-top: .25rem; border-top: 1px solid var(--line); font-size: clamp(1.45rem, 3vw, 2rem); }
+h3 { margin: 2rem 0 .65rem; font-size: 1.18rem; }
+p { margin: 0 0 1.1rem; }
+.lead { max-width: 66ch; margin-bottom: 1.5rem; color: var(--muted); font-size: 1.08rem; }
+.chapter-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.meta-card, .learning-box { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: 0 5px 22px rgba(0, 0, 0, .035); }
+.meta-card strong, .learning-box strong { display: block; margin-bottom: .3rem; color: var(--accent-strong); font-size: .78rem; letter-spacing: .06em; }
+.meta-card span { color: var(--muted); font-size: .88rem; }
+.learning-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .85rem; margin: 1.2rem 0 2.5rem; }
+.learning-box { margin: 0; }
+.learning-box h2 { margin: 0 0 .55rem; padding: 0; border: 0; font-size: 1rem; }
+.learning-box ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.learning-box li { margin: .25rem 0; color: var(--muted); font-size: .88rem; }
+.callout { margin: 1.35rem 0 1.6rem; padding: 1rem 1.1rem 1rem 1.25rem; border-left: 5px solid; border-radius: .2rem .8rem .8rem .2rem; background: var(--surface); }
+.callout strong { display: block; margin-bottom: .3rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.info { border-color: var(--info-line); background: var(--info-bg); }
+.callout.warning { border-color: var(--warning-line); background: var(--warning-bg); }
+.callout.danger { border-color: var(--danger-line); background: var(--danger-bg); }
+.callout.tip { border-color: var(--tip-line); background: var(--tip-bg); }
+.term { border-bottom: 2px dotted var(--accent); font-weight: 700; }
+.table-wrap { max-width: 100%; margin: 1.25rem 0 1.7rem; overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+table { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .7rem .85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--accent-strong); background: var(--surface-2); font-weight: 800; }
+tr:last-child td { border-bottom: 0; }
+ul, ol { margin: .7rem 0 1.25rem; padding-left: 1.45rem; }
+li { margin: .38rem 0; }
+blockquote { margin: 1.4rem 0; padding: .75rem 1.1rem; border-left: 4px solid var(--accent); color: var(--muted); background: var(--surface-2); }
+.code-wrap { position: relative; max-width: 100%; margin: 1.35rem 0 1.75rem; overflow: hidden; border: 1px solid #3f5950; border-radius: .8rem; background: var(--code-bg); box-shadow: var(--shadow); }
+.code-toolbar { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; padding: .35rem .55rem .35rem .85rem; border-bottom: 1px solid rgba(255, 255, 255, .13); color: #bcd2c6; background: rgba(255, 255, 255, .055); font-size: .75rem; }
+.code-language { font-weight: 800; letter-spacing: .08em; }
+.copy-button { padding: .25rem .55rem; border: 1px solid rgba(255, 255, 255, .3); border-radius: .45rem; color: #e8f4eb; background: transparent; cursor: pointer; }
+.copy-button:hover, .copy-button:focus-visible { background: rgba(255, 255, 255, .14); }
+.code-scroll { max-width: 100%; overflow-x: auto; }
+pre.code-block { margin: 0; min-width: max-content; padding: .9rem 0 1rem; color: var(--code-ink); font: .86rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+pre code { display: block; }
+.code-line { display: flex; min-height: 1.65em; padding-right: 1rem; }
+.code-line-number { flex: 0 0 3.25rem; padding-right: .8rem; color: #6e8a7e; text-align: right; user-select: none; }
+.code-line-text { display: block; padding-left: .2rem; white-space: pre; }
+.hl-keyword { color: var(--code-keyword); font-weight: 700; }
+.hl-string { color: var(--code-string); }
+.hl-comment { color: var(--code-comment); font-style: italic; }
+.hl-number { color: var(--code-number); }
+.hl-operator { color: var(--code-operator); }
+.hl-function { color: var(--code-function); }
+.hl-decorator { color: #f0a9dc; }
+.glossary { margin-top: 3.5rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface-2); }
+.glossary h2 { margin-top: 0; border: 0; }
+.glossary dl { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: .65rem 1rem; margin: 0; }
+.glossary dt { color: var(--accent-strong); font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+.checks { margin-top: 3rem; }
+.checks h2 { margin-bottom: .8rem; }
+.check-item { margin: .7rem 0; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); }
+.check-item summary { cursor: pointer; font-weight: 700; }
+.answer { margin: .65rem 0 0; padding: .7rem .9rem; color: var(--muted); background: var(--surface-2); }
+.chapter-nav-bottom { display: flex; gap: 1rem; justify-content: space-between; margin-top: 4rem; padding-top: 1.3rem; border-top: 2px solid var(--line); }
+.chapter-nav-bottom a { display: block; max-width: 48%; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-decoration: none; }
+.chapter-nav-bottom a:last-child { margin-left: auto; text-align: right; }
+.chapter-nav-bottom small { display: block; margin-bottom: .2rem; color: var(--muted); }
+.chapter-nav-bottom strong { color: var(--accent-strong); }
+.page-top { display: inline-block; margin-top: 2.2rem; font-size: .85rem; }
+@media (max-width: 1100px) { :root { --sidebar-width: 16rem; } main { margin-left: calc(var(--sidebar-width) + 1.6rem); } }
+@media (max-width: 900px) {
+  .menu-toggle { display: block; }
+  .sidebar { width: min(19rem, 88vw); transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow); }
+  body.drawer-open .sidebar { transform: translateX(0); }
+  .sidebar-close { display: block; font-size: 1.5rem; }
+  .drawer-backdrop { position: fixed; z-index: 25; inset: 0; background: rgba(0, 0, 0, .45); }
+  body.drawer-open .drawer-backdrop { display: block; }
+  main { width: min(var(--content-width), calc(100% - 2rem)); margin: 0 auto; padding-top: 5.1rem; }
+  .theme-toggle { top: .9rem; right: .8rem; }
+}
+@media (max-width: 650px) {
+  .chapter-meta, .learning-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2.1rem; }
+  .glossary dl { display: block; }
+  .glossary dt { margin-top: .9rem; }
+  .glossary dd { margin-top: .15rem; }
+  .chapter-nav-bottom { display: grid; }
+  .chapter-nav-bottom a { max-width: none; }
+  .chapter-nav-bottom a:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #111; --muted: #333; --line: #bbb; --code-bg: #f5f5f5; --code-ink: #111; }
+  .sidebar, .menu-toggle, .theme-toggle, .drawer-backdrop, .copy-button, .page-top { display: none !important; }
+  main { width: 100%; margin: 0; padding: 0; }
+  .chapter-header { padding-top: 0; }
+  .code-wrap { border: 1px solid #777; box-shadow: none; break-inside: avoid; }
+  pre.code-block { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+  .code-line { display: block; }
+  .code-line-number { display: none; }
+  .code-line-text { white-space: pre-wrap; }
+  a { color: #111; }
+  .chapter-nav-bottom { display: none; }
+}
+
+</style>
+</head>
+<body data-page="03-tlaplus-basics">
+<a class="skip-link" href="#main-content">本文へスキップ</a>
+<button id="menu-toggle" class="menu-toggle" type="button" aria-label="章目次を開く" aria-expanded="false" aria-controls="sidebar">☰</button>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="ダークテーマに切り替える" aria-pressed="false">☾ ダーク</button>
+<aside id="sidebar" class="sidebar" aria-label="章目次">
+<button id="sidebar-close" class="sidebar-close" type="button" aria-label="章目次を閉じる">×</button>
+<a class="brand" href="index.html">形式手法とテスト技法<small>Lean 4 / TLA+ / PBT 実務教科書</small></a>
+<div class="nav-label">CHAPTERS</div>
+<nav class="chapter-nav" aria-label="全章">
+<a class="chapter-link" data-page="index" href="index.html">表紙・読み方</a>
+<a class="chapter-link" data-page="00-overview" href="00-overview.html">00　3手法の地図</a>
+<a class="chapter-link" data-page="01-lean-basics" href="01-lean-basics.html">01　Lean 4 基礎</a>
+<a class="chapter-link" data-page="02-lean-examples" href="02-lean-examples.html">02　Lean 実践サンプル</a>
+<a class="chapter-link" data-page="03-tlaplus-basics" href="03-tlaplus-basics.html">03　TLA+ 基礎</a>
+<a class="chapter-link" data-page="04-tlaplus-examples" href="04-tlaplus-examples.html">04　TLA+ 実践サンプル</a>
+<a class="chapter-link" data-page="05-pbt-basics" href="05-pbt-basics.html">05　PBT 基礎</a>
+<a class="chapter-link" data-page="06-pbt-examples" href="06-pbt-examples.html">06　PBT 実践サンプル</a>
+<a class="chapter-link" data-page="07-combining" href="07-combining.html">07　3手法を組み合わせる</a>
+</nav>
+<div class="nav-label">ON THIS PAGE</div>
+<nav id="page-outline" class="page-outline" aria-label="このページの見出し"></nav>
+</aside>
+<div class="drawer-backdrop" aria-hidden="true"></div>
+<main id="main-content">
+<header class="chapter-header"><p class="eyebrow">Chapter 03 · 形式手法とテスト技法</p><h1>TLA+ / PlusCal / TLC の基礎</h1><p>状態とアクションをモデルにし、競合・保存・進行性を有限範囲で検査します。</p><div class="chapter-meta"><div class="meta-card"><strong>対象</strong><span>分散・並行システムを設計するエンジニア</span></div><div class="meta-card"><strong>成果物</strong><span>小さなTLA+モデルとTLC設定を書ける</span></div><div class="meta-card"><strong>読む目安</strong><span>70〜100分</span></div></div></header><section class="learning-grid" aria-label="章の案内"><div class="learning-box"><h2>この章で学ぶこと</h2><ul>
+<li>Init・Next・Specの関係</li>
+<li>TypeOK・Safety・Livenessの違い</li>
+<li>PlusCalとTLCの実行・状態爆発対策</li>
+</ul></div><div class="learning-box"><h2>前提知識</h2><ul>
+<li>変数・集合・論理式</li>
+<li>並行実行の順序</li>
+<li>有限モデルの考え方</li>
+</ul></div><div class="learning-box"><h2>所要時間の目安</h2><p>2ユーザー・容量1の反例を手で追い、SafetyとLivenessを分けます。</p></div></section><section id="state">
+<h2 id="state-heading">状態とアクション</h2>
+<p>TLA+では、システムを値の組として表す状態と、状態から次状態への関係で表します。<dfn>アクション</dfn>の中でプライム記号`'`を使うと、次の状態の値を書けます。プログラムの行順を写すより、何が一つの原子操作かを決めることが重要です。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Counter ----------------
+VARIABLE count
+
+Init == count = 0
+Inc == count' = count + 1
+Next == Inc
+Spec == Init /\ [][Next]_count
+===============================================</code></pre></div>
+</div>
+<p>`Init`は初期状態、`Next`は一ステップの遷移、`Spec`は実行全体の仕様です。`[][Next]_count`はNextが起きるか、観測変数countが変わらないstutteringを許します。</p>
+<aside class="callout info" role="note"><strong>先に日本語でアクションを書く</strong><p>「購入を一件確定し、在庫を一つ減らす」「監査ログだけを追加し、残高は変えない」のように一文で言えないアクションは、まだモデルの粒度が決まっていません。</p></aside>
+</section>
+<section id="invariant">
+<h2 id="invariant-heading">TypeOKと不変条件</h2>
+<p><dfn>不変条件</dfn>は、初期状態から到達できる全状態で成立してほしい述語です。`TypeOK`は値の形を、業務不変条件は保存・所有権・上限を表します。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---------------- MODULE CounterType ----------------
+EXTENDS Naturals
+VARIABLE count
+
+Init == count = 0
+Inc == count' = count + 1
+Next == Inc
+TypeOK == count \in Nat
+Bound == count &lt;= 10
+Spec == Init /\ [][Next]_count
+=======================================================</code></pre></div>
+</div>
+<p>TLCはモデルの状態を探索し、違反時に初期状態からのトレースを出します。`TypeOK`だけでは、在庫が負でない、二人が同じロックを持たない、台帳と残高が一致する、といった業務性質は保証しません。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+ / Safety</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>Safety == [] (count &gt;= 0)
+Progress == &lt;&gt; (count &gt; 0)</code></pre></div>
+</div>
+<p>Safetyは「悪い状態が起きない」、Livenessは「良い状態へいつか進む」です。Livenessには公平性、停止条件、環境の仮定が必要です。まずSafetyの反例を読めるモデルを作り、その後に進行性を追加します。</p>
+</section>
+<section id="logic">
+<h2 id="logic-heading">論理演算子とアクションの形</h2>
+<div class="table-wrap"><table><thead><tr><th>記法</th><th>意味</th><th>実務での確認</th></tr></thead><tbody><tr><td>`/\`</td><td>かつ</td><td>一つの遷移に必要な前提と更新を束ねる</td></tr><tr><td>`\/`</td><td>または</td><td>別のアクションを選択する</td></tr><tr><td>`'`</td><td>次状態</td><td>更新する変数をすべて書く</td></tr><tr><td>`UNCHANGED x`</td><td>xは不変</td><td>意図しない非決定性を防ぐ</td></tr><tr><td>`[]`</td><td>常に</td><td>Safetyの時間演算子</td></tr><tr><td>`&lt;&gt;`</td><td>いつか</td><td>Livenessの時間演算子</td></tr><tr><td>`WF_vars(A)`</td><td>弱公平性</td><td>有効なAが永遠に選ばれない実行を除く</td></tr></tbody></table></div>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>VARIABLES stock, log
+
+Init == /\ stock = 1
+        /\ log = &lt;&lt;&gt;&gt;
+
+Audit == /\ log' = Append(log, "audit")
+          /\ UNCHANGED stock
+
+Spec == Init /\ [][Audit]_&lt;&lt;stock, log&gt;&gt;</code></pre></div>
+</div>
+<p>アクションで更新しない変数を暗黙に残すと、TLA+の意味上は意図しない変化が許されることがあります。`UNCHANGED`は「変えない」という契約をコードに残します。</p>
+</section>
+<section id="sets">
+<h2 id="sets-heading">集合・関数・シーケンス</h2>
+<p>集合は順序を持たず、関数は引数から値への対応、シーケンスは順番を持つ列です。ユーザー集合を使うと存在量化でプロセスを選べます。キューのFIFOを表したいなら集合ではなく`Sequences`を使います。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Lock ----------------
+CONSTANT Users
+VARIABLE owner
+
+Init == owner = [u \in Users |-&gt; "free"]
+
+Claim(u) == /\ owner[u] = "free"
+            /\ owner' = [owner EXCEPT ![u] = "claimed"]
+
+Release(u) == /\ owner[u] = "claimed"
+              /\ owner' = [owner EXCEPT ![u] = "free"]
+
+Next == \E u \in Users : Claim(u) \/ Release(u)
+TypeOK == owner \in [Users -&gt; {"free", "claimed"}]
+Spec == Init /\ [][Next]_owner
+===============================================</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+ / Sequence</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Queue ----------------
+EXTENDS Naturals, Sequences
+VARIABLE queue
+
+Init == queue = &lt;&lt;&gt;&gt;
+Enqueue(x) == queue' = Append(queue, x)
+Dequeue == /\ Len(queue) &gt; 0
+           /\ queue' = Tail(queue)
+QueueType == queue \in Seq(Nat)
+Spec == Init /\ [][Enqueue(1) \/ Dequeue]_queue
+===============================================</code></pre></div>
+</div>
+<p>関数更新は元の関数を破壊せず、新しい関数を作ります。`@`は更新前の値です。キーが存在する前提や、空キューでDequeueを呼べない条件を`Next`に含めるか、TypeOKで監視するかを決めます。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>VARIABLE table
+
+Put(k, v) == table' = [table EXCEPT ![k] = v]
+Increment(k) == table' = [table EXCEPT ![k] = @ + 1]</code></pre></div>
+</div>
+</section>
+<section id="spec">
+<h2 id="spec-heading">Specを正しく閉じる</h2>
+<p>観測対象の変数を`vars == &lt;&lt;...&gt;&gt;`へまとめ、Specのstuttering対象に含めます。変数が漏れると、その変数だけ自由に変わる状態をTLCが許し、検査結果を誤解しやすくなります。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Pair ----------------
+VARIABLES x, y
+vars == &lt;&lt;x, y&gt;&gt;
+
+Init == /\ x = 0
+        /\ y = 0
+
+Step == /\ x' = x + 1
+        /\ y' = y + x'
+
+TypeOK == /\ x \in Nat
+          /\ y \in Nat
+
+Spec == Init /\ [][Step]_vars
+===============================================</code></pre></div>
+</div>
+<p>一アクションがDBトランザクションに対応するなら、実装でも同じ範囲がatomicityを持つか確認します。モデル上は一行でも、実装では複数SQLや外部APIを含むなら、失敗・リトライ・タイムアウトを別アクションに分けます。</p>
+<aside class="callout danger" role="note"><strong>モデルの簡略化を隠さない</strong><p>決済を一アクションにしたなら、ネットワーク分断と部分成功をモデル化していません。失った性質を表に書き、PBTや統合テストへ引き渡します。</p></aside>
+</section>
+<section id="tlc">
+<h2 id="tlc-heading">TLCを回す</h2>
+<p>TLCはTLA+仕様に具体的な定数を与え、有限状態を探索するモデルチェッカーです。Toolboxやエディタ拡張から実行できますが、CIでは同じモデルと設定をコマンドで再現できるようにします。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>java -cp tla2tools.jar tlc2.TLC \
+  -config Counter.cfg Counter.tla</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLC設定の例</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users = {"alice", "bob"}
+INVARIANT TypeOK
+INVARIANT Safety
+PROPERTY Progress</code></pre></div>
+</div>
+<p>設定を変更せずにモデルだけを変えると、何を検査したかが不明になります。成功ログにはモデル名、定数、検査したinvariant、TLCの版、実行日時を残します。</p>
+<div class="table-wrap"><table><thead><tr><th>確認</th><th>なぜ必要か</th><th>欠けたとき</th></tr></thead><tbody><tr><td>Initが実行可能</td><td>開始状態が存在する</td><td>0状態や即時エラーを成功と誤認</td></tr><tr><td>Nextに通常遷移がある</td><td>実行列が進む</td><td>停滞しかないモデルになる</td></tr><tr><td>定数が競合を含む</td><td>並行性を観測できる</td><td>一人モデルで穴が消える</td></tr><tr><td>監視変数がSpecに含まれる</td><td>変化を追跡できる</td><td>stutteringで自由に動く</td></tr><tr><td>期待する反例サイズを決める</td><td>短いトレースを読める</td><td>状態爆発に気づかない</td></tr></tbody></table></div>
+</section>
+<section id="pluscal">
+<h2 id="pluscal-heading">PlusCalから入る</h2>
+<p><dfn>PlusCal</dfn>は、プロセスと逐次的な見た目でアルゴリズムを書く記法です。変換後の意味はTLA+なので、生成されたTLA+のアクション・所有者条件・UNCHANGEDを必ず読みます。</p>
+<div class="code-wrap" data-lang="pluscal">
+<div class="code-toolbar"><span class="code-language">PlusCal</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE MutexPlusCal ----
+VARIABLE lock
+
+(* --algorithm Mutex
+variables lock = "free";
+process (P \in {"A", "B"})
+begin
+Acquire:
+  await lock = "free";
+  lock := self;
+Critical:
+  skip;
+Release:
+  lock := "free";
+end process;
+end algorithm; *)
+================================</code></pre></div>
+</div>
+<p>PlusCalは人間の制御フローを整理する入口、素のTLA+は集合・関係・時間演算子を直接書く出口です。変換後に`Acquire`が本当に一つの原子アクションか、`Release`が所有者だけに許されるかを検査します。</p>
+<aside class="callout warning" role="note"><strong>PlusCalの見た目に安心しない</strong><p>逐次プログラムのように見えても、複数processのinterleavingは存在します。コメントブロックを保存しただけでは証拠にならず、変換・モデル設定・invariantまで再現します。</p></aside>
+</section>
+<section id="explosion">
+<h2 id="explosion-heading">状態爆発を制御する</h2>
+<p>クライアント数、キュー長、再試行回数、履歴の長さは状態数を積で増やします。最小反例が目的なら、2プロセス・容量1・短い履歴から始めます。小さくする理由と一般化できる理由を別々に記録します。</p>
+<div class="table-wrap"><table><thead><tr><th>対策</th><th>方法</th><th>失う可能性</th></tr></thead><tbody><tr><td>対称性</td><td>同型のプロセスを同一視</td><td>IDに意味がある監査・権限</td></tr><tr><td>抽象化</td><td>金額をカテゴリへ</td><td>閾値・丸め・細かな順序</td></tr><tr><td>小さな定数</td><td>2人・容量1から開始</td><td>大規模固有の組合せ</td></tr><tr><td>履歴の圧縮</td><td>集合・カウンタにする</td><td>重複・順序・再配信</td></tr><tr><td>Safety優先</td><td>まず不変条件</td><td>進行性のバグ</td></tr></tbody></table></div>
+<p>抽象化は「バグを消す」こともあります。キューを集合に変えるとFIFOの逆転が観測できません。履歴をカウンタにするなら、順序が不要なことを要求とレビューで確認します。</p>
+</section>
+<section id="counterexample">
+<h2 id="counterexample-heading">反例を読む</h2>
+<p>TLCの反例では、違反状態だけでなく、そこへ至ったアクションの順序を読みます。どの前提が同時に満たされ、どの変数更新が同じアクションに入っていなかったかを確認します。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">反例トレース</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>State 1: stock = 1, reserved = {}
+Action: Reserve("alice")
+State 2: stock = 0, reserved = {"alice"}
+Action: Reserve("bob")
+State 3: stock = -1, reserved = {"alice", "bob"}</code></pre></div>
+</div>
+<p>この例では、予約前の`stock &gt; 0`が抜けたか、判定と更新のatomicityが抜けています。実装のロックを議論する前に、仕様の一アクションを直します。反例の状態列は修正後もfixtureや設計資料として保存します。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+ / Conservation</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>CONSTANT Capacity, Users
+VARIABLES available, held
+
+Init == /\ available = Capacity
+        /\ held = [u \in Users |-&gt; 0]
+
+Take(u) == /\ held[u] &lt; 1
+           /\ available &gt; 0
+           /\ available' = available - 1
+           /\ held' = [held EXCEPT ![u] = @ + 1]
+
+Return(u) == /\ held[u] = 1
+             /\ available' = available + 1
+             /\ held' = [held EXCEPT ![u] = 0]
+
+Next == \E u \in Users : Take(u) \/ Return(u)
+TypeOK == /\ available \in Nat
+          /\ held \in [Users -&gt; {0, 1}]
+Conservation == available + Sum({held[u] : u \in Users}) = Capacity
+Spec == Init /\ [][Next]_&lt;&lt;available, held&gt;&gt;</code></pre></div>
+</div>
+<p>保存不変量は、個々の操作が正しそうに見えるだけでは見つからない漏れを検出します。Returnの前提、初期値、二重取得を一つずつ壊して、どの短い反例になるかを学びます。</p>
+</section>
+<section id="fairness">
+<h2 id="fairness-heading">Livenessと公平性</h2>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Turn ----------------
+VARIABLE turn
+
+Init == turn = "alice"
+Next == turn' = IF turn = "alice" THEN "bob" ELSE "alice"
+Fairness == WF_&lt;&lt;turn&gt;&gt;(Next)
+Spec == Init /\ [][Next]_turn /\ Fairness
+===============================================</code></pre></div>
+</div>
+<p>`WF_vars(A)`は、アクションAが継続的に有効ならいつか実行されるという弱公平性です。永遠に一人だけが選ばれない実行を除外できますが、実装のスケジューラが本当に公平である証拠ではありません。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+ / Progress</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>VARIABLE status
+
+Init == status = "waiting"
+Complete == /\ status = "waiting"
+            /\ status' = "done"
+EventuallyDone == &lt;&gt; (status = "done")
+Spec == Init /\ [][Complete]_status</code></pre></div>
+</div>
+<aside class="callout warning" role="note"><strong>Livenessの仮定を書き残す</strong><p>ネットワークがいつか回復する、workerが公平に選ばれる、外部サービスが有限時間で返す、といった前提がないと、進行性の主張は過剰になります。</p></aside>
+</section>
+<section id="stepwise">
+<h2 id="stepwise-heading">段階的にモデルを拡張する</h2>
+<ol>
+<li>段階A：状態と一つの通常アクションだけを書く。</li>
+<li>段階B：TypeOKで値の形を固定する。</li>
+<li>段階C：Safety不変条件と保存を追加する。</li>
+<li>段階D：失敗、再試行、キャンセルを追加する。</li>
+<li>段階E：livenessと公平性を追加する。</li>
+<li>段階F：タイムアウト、分断、キャッシュの抽象化を見直す。</li>
+</ol>
+<p>最初からすべての障害を入れると、反例の意味が読めなくなります。各段階で「何を追加したか」「何をまだ落としているか」「新しい反例がどの設計判断を示すか」を変更記録に残します。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">レビュー質問</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>Initはどこから始まるか
+Nextの一回は何を意味するか
+更新しない変数はUNCHANGEDか
+TypeOKと業務不変条件は分かれているか
+モデルの原子性は実装の境界と対応するか
+公平性は環境のどんな仮定か</code></pre></div>
+</div>
+</section>
+<section id="practice">
+<h2 id="practice-heading">練習問題</h2>
+<p>次の問題は、先に日本語で性質を書き、その後にInit・Next・TypeOK・主不変条件・定数設定・期待する反例を作ります。</p>
+<ul>
+<li>容量2のキューが負の長さにならない。</li>
+<li>同じ利用者が二つのロックを同時に持たない。</li>
+<li>期限切れセッションが更新されない。</li>
+<li>二人のゲームで手番でない人が得点しない。</li>
+<li>冪等キーの再送で残高が二重に増えない。</li>
+</ul>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">提出形式</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>モデル名:
+定数:
+Init:
+Next:
+TypeOK:
+Safety:
+Livenessと公平性:
+TLCの期待結果:
+抽象化して失った性質:</code></pre></div>
+</div>
+<p>仕様を書く人とは別の人が、実装を見ずに`Init`と`Next`を説明できるか確認します。説明できない仕様は、実装の写経か、抽象化が過剰です。</p>
+</section>
+<section id="summary">
+<h2 id="summary-heading">まとめ</h2>
+<p>TLA+の本体は記法の暗記ではなく、状態・アクション・原子性・不変条件・公平性の選び方です。小さな定数で短い反例を作り、成功結果にもモデルの範囲を添えます。</p>
+<p>次章では在庫、セッション、ゲーム、保存量の実例を通じて、抽象モデルが何を表し、何を落とすかを確認します。</p>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>状態</dt><dd>状態変数の現在値を組にした、システムのスナップショット。</dd><dt>アクション</dt><dd>現在状態と次状態の関係を表す式。</dd><dt>stuttering</dt><dd>観測変数が変わらないまま進む、または停止するステップ。</dd><dt>TypeOK</dt><dd>変数が想定した型・集合に属するという不変条件。</dd><dt>公平性</dt><dd>有効なアクションやプロセスが永遠に無視されないという仮定。</dd><dt>状態爆発</dt><dd>変数やプロセスを増やすと状態数が組合せ的に増える現象。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：`Init`、`Next`、`Spec`をそれぞれ説明してください。</summary><div class="answer">Initは初期状態、Nextは一ステップの遷移、Specは実行全体です。</div></details><details class="check-item"><summary>問2：`UNCHANGED`を明示する理由は何ですか。</summary><div class="answer">更新しない変数に意図しない変化を許さず、アクションの粒度を明確にするためです。</div></details><details class="check-item"><summary>問3：SafetyとLivenessの反例はどう違いますか。</summary><div class="answer">Safetyは有限の違反トレース、Livenessは停滞や無限に進まない実行です。</div></details><details class="check-item"><summary>問4：TLCの定数を小さくする際、何を記録すべきですか。</summary><div class="answer">何を失ったか、なぜ最小反例として十分か、実装へどう引き渡すかです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="02-lean-examples.html"><small>← 前の章</small><strong>02　Lean 実践サンプル</strong></a><a href="04-tlaplus-examples.html"><small>次の章 →</small><strong>04　TLA+ 実践サンプル</strong></a></nav>
+<a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
+</main>
+<script>
+
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var body = document.body;
+
+  function readTheme() {
+    try { return localStorage.getItem("formal-methods-theme"); }
+    catch (error) { return null; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem("formal-methods-theme", theme); }
+    catch (error) { return; }
+  }
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+    else root.removeAttribute("data-theme");
+    var toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+    var dark = theme === "dark" ||
+      (theme !== "light" && window.matchMedia &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    toggle.textContent = dark ? "☀ ライト" : "☾ ダーク";
+    toggle.setAttribute("aria-label", dark ? "ライトテーマに切り替える" : "ダークテーマに切り替える");
+    toggle.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+  var storedTheme = readTheme();
+  applyTheme(storedTheme);
+
+  var themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = current === "dark" || (!current && prefersDark) ? "light" : "dark";
+    saveTheme(next);
+    applyTheme(next);
+  });
+
+  var menuToggle = document.getElementById("menu-toggle");
+  var closeButton = document.getElementById("sidebar-close");
+  var backdrop = document.querySelector(".drawer-backdrop");
+  function closeDrawer() {
+    body.classList.remove("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+  function openDrawer() {
+    body.classList.add("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", function () {
+    body.classList.contains("drawer-open") ? closeDrawer() : openDrawer();
+  });
+  if (closeButton) closeButton.addEventListener("click", closeDrawer);
+  if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".chapter-link").forEach(function (link) {
+    if (link.getAttribute("data-page") === body.getAttribute("data-page")) {
+      link.classList.add("is-current");
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", closeDrawer);
+  });
+
+  var outline = document.getElementById("page-outline");
+  var headings = Array.prototype.slice.call(document.querySelectorAll("main h2[id], main h3[id]"));
+  if (outline) headings.forEach(function (heading) {
+    var link = document.createElement("a");
+    link.href = "#" + heading.id;
+    link.className = "outline-link level-" + heading.tagName.substring(1);
+    link.textContent = heading.textContent;
+    outline.appendChild(link);
+  });
+  function markOutline(id) {
+    if (!outline) return;
+    outline.querySelectorAll("a").forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
+    });
+  }
+  if ("IntersectionObserver" in window && headings.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) markOutline(entry.target.id);
+      });
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    headings.forEach(function (heading) { observer.observe(heading); });
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var languageSets = {
+    lean: {
+      keywords: "theorem lemma def example by fun match with inductive structure namespace where let in if then else type class instance deriving open import",
+      tactics: "intro exact apply constructor cases induction simp simpa rw rfl omega ring linarith norm_num decide aesop have show calc unfold split",
+    },
+    tla: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec TypeOK Invariant Safety Liveness TRUE FALSE UNCHANGED IF THEN ELSE LET IN DOMAIN SUBSET Cardinality Len Append Seq INSTANCE ASSUME THEOREM PROVE WF SF process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    pluscal: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    python: {
+      keywords: "and as assert async await break case class continue def del elif else except finally for from if import in is lambda match nonlocal not or pass raise return try while with yield True False None",
+      tactics: "",
+    },
+    typescript: {
+      keywords: "as async await break case catch class const debugger default delete do else export extends false finally for from function if implements import in instanceof interface let new null of package private protected public return static super switch this throw true try type typeof var void while with yield",
+      tactics: "",
+    },
+    haskell: {
+      keywords: "case class data default deriving do else if import in let module new of then type where forall",
+      tactics: "",
+    },
+    shell: {
+      keywords: "if then else fi for in do done case esac function export cd printf echo",
+      tactics: "",
+    }
+  };
+  function hasWord(set, token) {
+    return set && set.split(/\s+/).indexOf(token) !== -1;
+  }
+  function classifyToken(token, language) {
+    var set = languageSets[language] || languageSets.python;
+    if (token.charCodeAt(0) === 92 && token.charAt(1) === "*") return "hl-comment";
+    if (token.indexOf("--") === 0 || token.indexOf("#") === 0 || token.indexOf("//") === 0 || token.indexOf("/*") === 0 || token.indexOf("/-") === 0 || token.indexOf("(*") === 0 || token.indexOf("\\\\*") === 0) return "hl-comment";
+    if (/^(["'\x60])/.test(token)) return "hl-string";
+    if (/^\d/.test(token)) return "hl-number";
+    if (language === "python" && /^@/.test(token)) return "hl-decorator";
+    if (hasWord(set.tactics, token)) return "hl-function";
+    if (hasWord(set.keywords, token)) return "hl-keyword";
+    var operator = token === "<>" || token === "[]" || token === "~>" || token === "=>" || token === "->" || token === "<-" || token === ":=" || token === "===" || token === "!==" || token === "==" || token === "!=" || token === "<=" || token === ">=" || token === "&&" || token === "||" || token === "++" || token === "--" || token === "=" || token === "~" || token === "#" || token === "'" || token === "|" || token === ":" || token === "<" || token === ">" || token === "+" || token === "*" || token === "/" || token === "-" || token.indexOf("\\\\") !== -1;
+    if (token.charCodeAt(0) === 92 || token.charCodeAt(token.length - 1) === 92) return "hl-operator";
+    if (operator) return "hl-operator";
+    if (/^[A-Za-z_][A-Za-z0-9_']*$/.test(token) && /^[A-Z]/.test(token)) return "hl-function";
+    return "";
+  }
+  function highlight(source, language) {
+    var pattern = /(\\\*[^\n]*|--[^\n]*|#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/-[\s\S]*?-\*|\(\*[\s\S]*?\*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\x60(?:\\.|[^\x60\\])*\x60|\b\d+(?:\.\d+)?\b|@[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_']*|\/\\|\\\/|<>|\[\]|~>|=>|->|<-|:=|===|!==|==|!=|<=|>=|&&|\|\||\+\+|--|[=~#'|:<>+*\/-])/gm;
+    return source.replace(pattern, function (token) {
+      var kind = classifyToken(token, language);
+      return kind ? '<span class="' + kind + '">' + escapeHTML(token) + "</span>" : escapeHTML(token);
+    });
+  }
+  function decorateCode(wrapper) {
+    var code = wrapper.querySelector("code");
+    if (!code) return;
+    var raw = code.textContent.replace(/\n$/, "");
+    wrapper.setAttribute("data-raw", raw);
+    var highlighted = highlight(raw, wrapper.getAttribute("data-lang") || "python");
+    code.innerHTML = highlighted.split("\n").map(function (line, index) {
+      return '<span class="code-line"><span class="code-line-number" aria-hidden="true">' +
+        (index + 1) + '</span><span class="code-line-text">' + (line || " ") +
+        "</span></span>";
+    }).join("\n");
+  }
+  document.querySelectorAll(".code-wrap").forEach(decorateCode);
+
+  function fallbackCopy(raw, done) {
+    var area = document.createElement("textarea");
+    area.value = raw;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try { document.execCommand("copy"); done(); }
+    finally { document.body.removeChild(area); }
+  }
+  function copyCode(button) {
+    var wrapper = button.closest(".code-wrap");
+    var raw = wrapper ? wrapper.getAttribute("data-raw") : "";
+    if (!raw) return;
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "コピー済み";
+      button.setAttribute("aria-label", "コードをコピーしました");
+      window.setTimeout(function () {
+        button.textContent = old;
+        button.setAttribute("aria-label", "コードだけをコピー");
+      }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(raw).then(done).catch(function () { fallbackCopy(raw, done); });
+    } else {
+      fallbackCopy(raw, done);
+    }
+  }
+  document.querySelectorAll(".copy-button").forEach(function (button) {
+    button.addEventListener("click", function () { copyCode(button); });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeDrawer();
+  });
+})();
+
+</script>
+</body>
+</html>

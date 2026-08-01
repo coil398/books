@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="形式手法とテスト技法を実務のコード例で学ぶ日本語HTML教科書">
+<title>Lean 4 実践サンプル | 形式手法とテスト技法</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --surface-2: #eef2ed;
+  --surface-3: #e4ebe4;
+  --ink: #25312d;
+  --muted: #5d6c65;
+  --faint: #7b8b83;
+  --line: #d3ddd5;
+  --accent: #236b5a;
+  --accent-strong: #174e42;
+  --accent-soft: #d9eee6;
+  --link: #155e9a;
+  --shadow: 0 15px 45px rgba(37, 55, 45, .10);
+  --code-bg: #202c2a;
+  --code-ink: #e8f2eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #e5f1fb;
+  --info-line: #347daf;
+  --warning-bg: #fff3d8;
+  --warning-line: #b27a17;
+  --danger-bg: #fde4e5;
+  --danger-line: #b54a50;
+  --tip-bg: #e6f4e8;
+  --tip-line: #3b8450;
+  --focus: #d67500;
+  --sidebar-width: 18rem;
+  --content-width: 72ch;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18211f;
+    --surface: #202b28;
+    --surface-2: #263632;
+    --surface-3: #30433d;
+    --ink: #e7eee9;
+    --muted: #b6c7bf;
+    --faint: #91a79c;
+    --line: #40544d;
+    --accent: #7ad0b2;
+    --accent-strong: #a1e5ca;
+    --accent-soft: #24473e;
+    --link: #8dcaff;
+    --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+    --code-bg: #101817;
+    --code-ink: #e5f1eb;
+    --code-keyword: #9bd6ff;
+    --code-string: #f2c987;
+    --code-comment: #91aa9d;
+    --code-number: #dfb2ff;
+    --code-operator: #ff9eaa;
+    --code-function: #b8e7c0;
+    --info-bg: #183449;
+    --info-line: #82bce7;
+    --warning-bg: #4a3819;
+    --warning-line: #efc767;
+    --danger-bg: #4d252a;
+    --danger-line: #ef9ca1;
+    --tip-bg: #1d3b29;
+    --tip-line: #91d19b;
+    --focus: #ffc36d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18211f;
+  --surface: #202b28;
+  --surface-2: #263632;
+  --surface-3: #30433d;
+  --ink: #e7eee9;
+  --muted: #b6c7bf;
+  --faint: #91a79c;
+  --line: #40544d;
+  --accent: #7ad0b2;
+  --accent-strong: #a1e5ca;
+  --accent-soft: #24473e;
+  --link: #8dcaff;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+  --code-bg: #101817;
+  --code-ink: #e5f1eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #183449;
+  --info-line: #82bce7;
+  --warning-bg: #4a3819;
+  --warning-line: #efc767;
+  --danger-bg: #4d252a;
+  --danger-line: #ef9ca1;
+  --tip-bg: #1d3b29;
+  --tip-line: #91d19b;
+  --focus: #ffc36d;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+a { color: var(--link); text-underline-offset: .18em; }
+a:hover { color: var(--accent-strong); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip-link {
+  position: fixed; z-index: 50; top: .75rem; left: .75rem;
+  padding: .5rem .75rem; color: #fff; background: var(--accent-strong);
+  border-radius: .5rem; transform: translateY(-160%); transition: transform .2s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.menu-toggle {
+  display: none; position: fixed; z-index: 40; top: .9rem; left: .9rem;
+  width: 2.9rem; height: 2.9rem; border: 1px solid var(--line);
+  border-radius: .75rem; color: var(--ink); background: var(--surface);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.theme-toggle {
+  position: fixed; z-index: 35; top: 1rem; right: 1.25rem;
+  min-width: 6.7rem; padding: .45rem .7rem; border: 1px solid var(--line);
+  border-radius: 999px; color: var(--ink); background: var(--surface);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .08); cursor: pointer;
+}
+.sidebar {
+  position: fixed; z-index: 30; inset: 0 auto 0 0; display: flex;
+  width: var(--sidebar-width); flex-direction: column; padding: 1.25rem 1rem 1.5rem;
+  overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface);
+}
+.brand { display: block; margin: .15rem .5rem 1.15rem; color: var(--ink); font-size: .93rem; font-weight: 800; line-height: 1.45; text-decoration: none; letter-spacing: .04em; }
+.brand small { display: block; margin-top: .3rem; color: var(--muted); font-size: .72rem; font-weight: 500; letter-spacing: 0; }
+.chapter-nav, .page-outline { display: grid; gap: .18rem; }
+.nav-label { margin: 1rem .5rem .35rem; color: var(--faint); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chapter-link, .outline-link { display: block; border-left: 3px solid transparent; border-radius: 0 .45rem .45rem 0; color: var(--muted); text-decoration: none; }
+.chapter-link { padding: .46rem .55rem; font-size: .84rem; line-height: 1.4; }
+.outline-link { padding: .22rem .45rem; font-size: .76rem; line-height: 1.45; }
+.outline-link.level-3 { padding-left: 1.05rem; font-size: .72rem; }
+.chapter-link:hover, .outline-link:hover, .chapter-link.is-current, .outline-link.is-active { border-left-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.sidebar-close { display: none; align-self: flex-end; border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.drawer-backdrop { display: none; }
+main {
+  width: min(var(--content-width), calc(100% - 2rem));
+  margin: 0 auto 0 calc(var(--sidebar-width) + max(2rem, (100vw - var(--sidebar-width) - var(--content-width)) / 2));
+  padding: 4.4rem 0 5rem;
+}
+.chapter-header { margin-bottom: 2.5rem; }
+.eyebrow { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+h1, h2, h3 { color: var(--ink); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+h1 { max-width: 19ch; margin: 0 0 1.1rem; font-size: clamp(2rem, 5vw, 3.35rem); letter-spacing: -.035em; }
+h2 { margin: 3.3rem 0 1rem; padding-top: .25rem; border-top: 1px solid var(--line); font-size: clamp(1.45rem, 3vw, 2rem); }
+h3 { margin: 2rem 0 .65rem; font-size: 1.18rem; }
+p { margin: 0 0 1.1rem; }
+.lead { max-width: 66ch; margin-bottom: 1.5rem; color: var(--muted); font-size: 1.08rem; }
+.chapter-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.meta-card, .learning-box { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: 0 5px 22px rgba(0, 0, 0, .035); }
+.meta-card strong, .learning-box strong { display: block; margin-bottom: .3rem; color: var(--accent-strong); font-size: .78rem; letter-spacing: .06em; }
+.meta-card span { color: var(--muted); font-size: .88rem; }
+.learning-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .85rem; margin: 1.2rem 0 2.5rem; }
+.learning-box { margin: 0; }
+.learning-box h2 { margin: 0 0 .55rem; padding: 0; border: 0; font-size: 1rem; }
+.learning-box ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.learning-box li { margin: .25rem 0; color: var(--muted); font-size: .88rem; }
+.callout { margin: 1.35rem 0 1.6rem; padding: 1rem 1.1rem 1rem 1.25rem; border-left: 5px solid; border-radius: .2rem .8rem .8rem .2rem; background: var(--surface); }
+.callout strong { display: block; margin-bottom: .3rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.info { border-color: var(--info-line); background: var(--info-bg); }
+.callout.warning { border-color: var(--warning-line); background: var(--warning-bg); }
+.callout.danger { border-color: var(--danger-line); background: var(--danger-bg); }
+.callout.tip { border-color: var(--tip-line); background: var(--tip-bg); }
+.term { border-bottom: 2px dotted var(--accent); font-weight: 700; }
+.table-wrap { max-width: 100%; margin: 1.25rem 0 1.7rem; overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+table { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .7rem .85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--accent-strong); background: var(--surface-2); font-weight: 800; }
+tr:last-child td { border-bottom: 0; }
+ul, ol { margin: .7rem 0 1.25rem; padding-left: 1.45rem; }
+li { margin: .38rem 0; }
+blockquote { margin: 1.4rem 0; padding: .75rem 1.1rem; border-left: 4px solid var(--accent); color: var(--muted); background: var(--surface-2); }
+.code-wrap { position: relative; max-width: 100%; margin: 1.35rem 0 1.75rem; overflow: hidden; border: 1px solid #3f5950; border-radius: .8rem; background: var(--code-bg); box-shadow: var(--shadow); }
+.code-toolbar { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; padding: .35rem .55rem .35rem .85rem; border-bottom: 1px solid rgba(255, 255, 255, .13); color: #bcd2c6; background: rgba(255, 255, 255, .055); font-size: .75rem; }
+.code-language { font-weight: 800; letter-spacing: .08em; }
+.copy-button { padding: .25rem .55rem; border: 1px solid rgba(255, 255, 255, .3); border-radius: .45rem; color: #e8f4eb; background: transparent; cursor: pointer; }
+.copy-button:hover, .copy-button:focus-visible { background: rgba(255, 255, 255, .14); }
+.code-scroll { max-width: 100%; overflow-x: auto; }
+pre.code-block { margin: 0; min-width: max-content; padding: .9rem 0 1rem; color: var(--code-ink); font: .86rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+pre code { display: block; }
+.code-line { display: flex; min-height: 1.65em; padding-right: 1rem; }
+.code-line-number { flex: 0 0 3.25rem; padding-right: .8rem; color: #6e8a7e; text-align: right; user-select: none; }
+.code-line-text { display: block; padding-left: .2rem; white-space: pre; }
+.hl-keyword { color: var(--code-keyword); font-weight: 700; }
+.hl-string { color: var(--code-string); }
+.hl-comment { color: var(--code-comment); font-style: italic; }
+.hl-number { color: var(--code-number); }
+.hl-operator { color: var(--code-operator); }
+.hl-function { color: var(--code-function); }
+.hl-decorator { color: #f0a9dc; }
+.glossary { margin-top: 3.5rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface-2); }
+.glossary h2 { margin-top: 0; border: 0; }
+.glossary dl { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: .65rem 1rem; margin: 0; }
+.glossary dt { color: var(--accent-strong); font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+.checks { margin-top: 3rem; }
+.checks h2 { margin-bottom: .8rem; }
+.check-item { margin: .7rem 0; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); }
+.check-item summary { cursor: pointer; font-weight: 700; }
+.answer { margin: .65rem 0 0; padding: .7rem .9rem; color: var(--muted); background: var(--surface-2); }
+.chapter-nav-bottom { display: flex; gap: 1rem; justify-content: space-between; margin-top: 4rem; padding-top: 1.3rem; border-top: 2px solid var(--line); }
+.chapter-nav-bottom a { display: block; max-width: 48%; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-decoration: none; }
+.chapter-nav-bottom a:last-child { margin-left: auto; text-align: right; }
+.chapter-nav-bottom small { display: block; margin-bottom: .2rem; color: var(--muted); }
+.chapter-nav-bottom strong { color: var(--accent-strong); }
+.page-top { display: inline-block; margin-top: 2.2rem; font-size: .85rem; }
+@media (max-width: 1100px) { :root { --sidebar-width: 16rem; } main { margin-left: calc(var(--sidebar-width) + 1.6rem); } }
+@media (max-width: 900px) {
+  .menu-toggle { display: block; }
+  .sidebar { width: min(19rem, 88vw); transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow); }
+  body.drawer-open .sidebar { transform: translateX(0); }
+  .sidebar-close { display: block; font-size: 1.5rem; }
+  .drawer-backdrop { position: fixed; z-index: 25; inset: 0; background: rgba(0, 0, 0, .45); }
+  body.drawer-open .drawer-backdrop { display: block; }
+  main { width: min(var(--content-width), calc(100% - 2rem)); margin: 0 auto; padding-top: 5.1rem; }
+  .theme-toggle { top: .9rem; right: .8rem; }
+}
+@media (max-width: 650px) {
+  .chapter-meta, .learning-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2.1rem; }
+  .glossary dl { display: block; }
+  .glossary dt { margin-top: .9rem; }
+  .glossary dd { margin-top: .15rem; }
+  .chapter-nav-bottom { display: grid; }
+  .chapter-nav-bottom a { max-width: none; }
+  .chapter-nav-bottom a:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #111; --muted: #333; --line: #bbb; --code-bg: #f5f5f5; --code-ink: #111; }
+  .sidebar, .menu-toggle, .theme-toggle, .drawer-backdrop, .copy-button, .page-top { display: none !important; }
+  main { width: 100%; margin: 0; padding: 0; }
+  .chapter-header { padding-top: 0; }
+  .code-wrap { border: 1px solid #777; box-shadow: none; break-inside: avoid; }
+  pre.code-block { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+  .code-line { display: block; }
+  .code-line-number { display: none; }
+  .code-line-text { white-space: pre-wrap; }
+  a { color: #111; }
+  .chapter-nav-bottom { display: none; }
+}
+
+</style>
+</head>
+<body data-page="02-lean-examples">
+<a class="skip-link" href="#main-content">本文へスキップ</a>
+<button id="menu-toggle" class="menu-toggle" type="button" aria-label="章目次を開く" aria-expanded="false" aria-controls="sidebar">☰</button>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="ダークテーマに切り替える" aria-pressed="false">☾ ダーク</button>
+<aside id="sidebar" class="sidebar" aria-label="章目次">
+<button id="sidebar-close" class="sidebar-close" type="button" aria-label="章目次を閉じる">×</button>
+<a class="brand" href="index.html">形式手法とテスト技法<small>Lean 4 / TLA+ / PBT 実務教科書</small></a>
+<div class="nav-label">CHAPTERS</div>
+<nav class="chapter-nav" aria-label="全章">
+<a class="chapter-link" data-page="index" href="index.html">表紙・読み方</a>
+<a class="chapter-link" data-page="00-overview" href="00-overview.html">00　3手法の地図</a>
+<a class="chapter-link" data-page="01-lean-basics" href="01-lean-basics.html">01　Lean 4 基礎</a>
+<a class="chapter-link" data-page="02-lean-examples" href="02-lean-examples.html">02　Lean 実践サンプル</a>
+<a class="chapter-link" data-page="03-tlaplus-basics" href="03-tlaplus-basics.html">03　TLA+ 基礎</a>
+<a class="chapter-link" data-page="04-tlaplus-examples" href="04-tlaplus-examples.html">04　TLA+ 実践サンプル</a>
+<a class="chapter-link" data-page="05-pbt-basics" href="05-pbt-basics.html">05　PBT 基礎</a>
+<a class="chapter-link" data-page="06-pbt-examples" href="06-pbt-examples.html">06　PBT 実践サンプル</a>
+<a class="chapter-link" data-page="07-combining" href="07-combining.html">07　3手法を組み合わせる</a>
+</nav>
+<div class="nav-label">ON THIS PAGE</div>
+<nav id="page-outline" class="page-outline" aria-label="このページの見出し"></nav>
+</aside>
+<div class="drawer-backdrop" aria-hidden="true"></div>
+<main id="main-content">
+<header class="chapter-header"><p class="eyebrow">Chapter 02 · 形式手法とテスト技法</p><h1>Lean 4 実践サンプル</h1><p>数学・物理学・ゲーム・Webの中核性質を、型・定義・定理へ切り出します。</p><div class="chapter-meta"><div class="meta-card"><strong>対象</strong><span>01章のLean基礎を終えた人</span></div><div class="meta-card"><strong>成果物</strong><span>ドメイン性質をLeanへ翻訳できる</span></div><div class="meta-card"><strong>読む目安</strong><span>70〜100分</span></div></div></header><section class="learning-grid" aria-label="章の案内"><div class="learning-box"><h2>この章で学ぶこと</h2><ul>
+<li>自然数・代数・順序を証明する</li>
+<li>単位・盤面・認可を型へ切り出す</li>
+<li>Leanと実装の接続境界を説明する</li>
+</ul></div><div class="learning-box"><h2>前提知識</h2><ul>
+<li>induction、simp、omega、ring</li>
+<li>List・Bool・inductive</li>
+<li>基本的なドメイン設計</li>
+</ul></div><div class="learning-box"><h2>所要時間の目安</h2><p>四領域から最低一例ずつ選び、保証の境界を書きます。</p></div></section><section id="run">
+<h2 id="run-heading">サンプルを実行する準備</h2>
+<p>この章の例は、数学・物理学・ゲーム・Webアプリケーションの性質をLeanで表します。<dfn>保証したいこと</dfn>、なぜ重要か、破れたときの影響を先に説明し、コードは一つの`Main.lean`へ貼れる形を目指します。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>lake new lean-examples math
+cd lean-examples
+cp /path/to/Main.lean Main.lean
+lake env lean Main.lean
+lake build</code></pre></div>
+</div>
+<p>一つのファイルへ多くの例を貼ると、定理名の衝突や型変数の推論差が出ます。まず一例ずつ`example`として動かし、意味が固まったらnamespaceとファイルを分けます。</p>
+<aside class="callout warning" role="note"><strong>コードが通ることと仕様が正しいことは別</strong><p>Leanが検査するのは書かれた定義と定理です。物理法則の近似範囲、ゲームのルール、WebのミドルウェアやDB接続は別の境界として記録します。</p></aside>
+</section>
+<section id="math-natural">
+<h2 id="math-natural-heading">数学：自然数とリスト</h2>
+<h3 id="math-add">例1：加法の単位元</h3>
+<p>保証したいのは任意の自然数nについてn + 0 = nです。空のバッチを追加しても集計値が変わらないという、業務処理の基礎になります。破れると、初期化や空集合の扱いで数量がずれます。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+theorem nat_add_zero (n : Nat) : n + 0 = n := by
+  induction n with
+  | zero =&gt; rfl
+  | succ n ih =&gt; simp [Nat.succ_add, ih]</code></pre></div>
+</div>
+<h3 id="math-length">例2：mapとappendの長さ保存</h3>
+<p>変換や分割が要素を落とさないことを保証します。ページネーションや固定長バッファの上限計算が壊れると、欠落・重複・バッチの取りこぼしが起きます。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+theorem map_length (f : α → β) (xs : List α) :
+    (xs.map f).length = xs.length := by
+  induction xs with
+  | nil =&gt; rfl
+  | cons x xs ih =&gt; simp [ih]
+
+theorem append_length (xs ys : List α) :
+    (xs ++ ys).length = xs.length + ys.length := by
+  induction xs with
+  | nil =&gt; simp
+  | cons x xs ih =&gt; simp [ih]</code></pre></div>
+</div>
+<h3 id="math-max">例3：最大値の上限</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+theorem max_le_of_le {a b c : Nat} (ha : a ≤ c) (hb : b ≤ c) :
+    max a b ≤ c := by
+  exact max_le ha hb
+
+example (xs : List Nat) (h : ∀ x ∈ xs, x ≤ 100) :
+    ∀ x ∈ xs, x ≤ 100 := by
+  exact h</code></pre></div>
+</div>
+<p>入力制約を前提として型に渡すと、後段で同じ制約を何度も再検査しなくて済みます。ただし、境界で本当に上限を検証したかはPBTやAPIテストで確認します。</p>
+</section>
+<section id="math-algebra">
+<h2 id="math-algebra-heading">数学：代数・順序・合同</h2>
+<h3 id="group-inverse">例4：群の逆元</h3>
+<p>操作を巻き戻すと単位元に戻る性質を保証します。認証や暗号の数学的核を説明する例にはなりますが、暗号実装全体の安全性を証明するものではありません。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+variable {G : Type*} [Group G]
+
+theorem inv_mul_cancel_custom (x : G) : x⁻¹ * x = 1 := by
+  exact inv_mul_cancel₀ x
+
+theorem mul_inv_cancel_custom (x : G) : x * x⁻¹ = 1 := by
+  exact mul_inv_cancel x</code></pre></div>
+</div>
+<h3 id="order">例5：順序の反射性・推移性</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+theorem le_trans_custom {α : Type*} [Preorder α]
+    {a b c : α} (hab : a ≤ b) (hbc : b ≤ c) : a ≤ c := by
+  exact le_trans hab hbc
+
+theorem le_refl_custom {α : Type*} [Preorder α] (a : α) : a ≤ a := by
+  exact le_rfl</code></pre></div>
+</div>
+<p>価格や権限レベルの比較が推移的であることを確認します。比較が推移的でないドメインにPreorderを付けると、証明の前提そのものが誤ります。</p>
+<h3 id="zmod">例6：剰余算術</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+example : (17 : ZMod 5) = 2 := by
+  decide
+
+theorem congruence_add (a b : ZMod 7) : a + b = b + a := by
+  exact add_comm a b</code></pre></div>
+</div>
+<p>`ZMod n`は剰余を型に埋め込み、整数と剰余の混同を減らします。ハッシュや暗号の補助計算では、整数の範囲と剰余の意味を別の型として扱います。</p>
+</section>
+<section id="physics-units">
+<h2 id="physics-units-heading">物理学：単位を型に入れる</h2>
+<p>物理量を一つの`ℚ`に詰め込むと、距離と時間を足す誤りが型検査をすり抜けます。ここでは教育用の最小モデルとして、`Meter`と`Second`を別型にします。SI単位系全体や次元解析器の実装ではありません。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+structure Meter where
+  value : ℚ
+deriving DecidableEq
+
+structure Second where
+  value : ℚ
+deriving DecidableEq
+
+def Meter.add (a b : Meter) : Meter :=
+  ⟨a.value + b.value⟩
+
+def Meter.scale (k : ℚ) (a : Meter) : Meter :=
+  ⟨k * a.value⟩
+
+def velocity (d : Meter) (t : Second) (h : t.value ≠ 0) : ℚ :=
+  d.value / t.value
+
+example (d : Meter) : Meter.scale 1 d = d := by
+  cases d
+  simp [Meter.scale]</code></pre></div>
+</div>
+<p>保証したいのは単位の取り違えが型として表面化することです。破れると、シミュレーションの時間刻みを距離として扱い、速度や位置が意味のない値になります。</p>
+<h3 id="physics-discrete">例：等加速度の離散式</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def nextPosition (x v a dt : ℚ) : ℚ :=
+  x + v * dt + (a * dt^2) / 2
+
+theorem nextPosition_zero_dt (x v a : ℚ) :
+    nextPosition x v a 0 = x := by
+  simp [nextPosition]
+
+theorem nextPosition_affine (x v a dt : ℚ) :
+    nextPosition x v a dt - x =
+      v * dt + (a * dt^2) / 2 := by
+  ring</code></pre></div>
+</div>
+<p>時間刻み0で位置が変わらないことは、積分器の境界条件です。破れると停止したシミュレーションでも状態が動きます。浮動小数・丸め・安定性はこの代数式の対象外なので、PBTで許容誤差を検査します。</p>
+<h3 id="physics-energy">例：エネルギー式の同値性</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def energy (m v g h : ℚ) : ℚ :=
+  m * v^2 / 2 + m * g * h
+
+theorem energy_swap (m v g h : ℚ) :
+    energy m v g h = m * (v^2 / 2 + g * h) := by
+  ring</code></pre></div>
+</div>
+<aside class="callout warning" role="note"><strong>式の同値性は物理法則そのものではない</strong><p>保存を主張するには運動方程式、境界、初期条件、誤差モデルが必要です。Leanが示すのは、ここで定義した式の代数的同値性です。</p></aside>
+</section>
+<section id="game-result">
+<h2 id="game-result-heading">ゲーム：勝敗とスコア</h2>
+<h3 id="game-total">例1：勝敗判定の全域性</h3>
+<p>どんな整数の組でも勝ち・負け・引き分けのいずれかになることを保証します。全域性が破れると、UI、リプレイ、ランキングが未知の結果値で停止します。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+inductive Result where
+  | win | lose | draw
+deriving DecidableEq, Repr
+
+def result (a b : Int) : Result :=
+  if a &gt; b then .win else if a &lt; b then .lose else .draw
+
+theorem result_cases (a b : Int) :
+    result a b = .win ∨ result a b = .lose ∨ result a b = .draw := by
+  unfold result
+  split &lt;;&gt; simp_all</code></pre></div>
+</div>
+<h3 id="game-score">例2：スコアの単調性</h3>
+<p>ボーナスを増やしたのにスコアが下がらないことを保証します。ランキングの逆転や報酬の不正減算を、数学的なpropertyとして固定できます。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def score (base bonus : Nat) : Nat := base + bonus
+
+theorem score_mono_bonus (base b₁ b₂ : Nat) (h : b₁ ≤ b₂) :
+    score base b₁ ≤ score base b₂ := by
+  exact Nat.add_le_add_left h base
+
+theorem score_zero (base : Nat) : score base 0 = base := by
+  simp [score]</code></pre></div>
+</div>
+<h3 id="game-board">例3：盤面遷移の不変量</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+structure Board where
+  pieces : Fin 9 → Bool
+
+def place (b : Board) (i : Fin 9) : Board :=
+  { b with pieces := fun j =&gt; if j = i then true else b.pieces j }
+
+theorem place_true (b : Board) (i : Fin 9) :
+    (place b i).pieces i = true := by
+  simp [place]</code></pre></div>
+</div>
+<p>`Fin 9`は0〜8の範囲にあるインデックスです。無検証の整数を使うと盤外アクセスを別の層で処理する必要があります。型で合法手を表しても、手番や勝敗ルールは別の不変条件として追加します。</p>
+</section>
+<section id="web-auth">
+<h2 id="web-auth-heading">Web：認可とページネーション</h2>
+<h3 id="web-default-deny">例1：認可のdefault deny</h3>
+<p>公開したくないRoleとActionの組合せを明示的に拒否します。破れると、ゲストの削除やメンバーの管理操作が権限昇格として実行されます。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+inductive Role | guest | member | admin
+deriving DecidableEq
+
+inductive Action | read | write | delete
+deriving DecidableEq
+
+def allowed : Role → Action → Bool
+  | .guest, .read =&gt; true
+  | .member, .read =&gt; true
+  | .member, .write =&gt; true
+  | .admin, _ =&gt; true
+  | _, _ =&gt; false
+
+theorem guest_cannot_delete :
+    allowed .guest .delete = false := by
+  decide
+
+theorem admin_can_delete :
+    allowed .admin .delete = true := by
+  decide</code></pre></div>
+</div>
+<h3 id="web-page">例2：ページサイズの上限</h3>
+<p>ページサイズが上限を越えず、サイズ0なら空になる性質を保証します。offsetの計算やページ間非重複は、別の前提を持つ独立した定理にします。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def page (xs : List α) (size offset : Nat) : List α :=
+  (xs.drop offset).take size
+
+theorem page_empty_size (xs : List α) (offset : Nat) :
+    page xs 0 offset = [] := by
+  simp [page]
+
+theorem page_length_le (xs : List α) (size offset : Nat) :
+    (page xs size offset).length ≤ size := by
+  exact List.length_take_le _ _</code></pre></div>
+</div>
+<h3 id="web-session">例3：セッション状態</h3>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+inductive SessionState
+  | anonymous | authenticated | revoked
+deriving DecidableEq
+
+def canRefresh : SessionState → Bool
+  | .authenticated =&gt; true
+  | _ =&gt; false
+
+theorem revoked_cannot_refresh :
+    canRefresh .revoked = false := by
+  decide
+
+theorem auth_refresh :
+    canRefresh .authenticated = true := by
+  decide</code></pre></div>
+</div>
+<p>JWTの署名、時計、鍵ローテーション、キャッシュの読み方はこの純粋関数の外側です。純粋な認可表を証明しただけで、すべてのHTTP経路がこの表を通るとは限りません。</p>
+</section>
+<section id="design">
+<h2 id="design-heading">証明の設計と限界</h2>
+<div class="table-wrap"><table><thead><tr><th>観察</th><th>設計への問い</th><th>次の一手</th></tr></thead><tbody><tr><td>Boolで表した</td><td>命題として証明する必要があるか</td><td>PropやDecidableを検討</td></tr><tr><td>Natでunderflowした</td><td>負の値は入力不正か状態か</td><td>Int、Option、proof-carrying型</td></tr><tr><td>単位が値の名前だけ</td><td>型で混同を禁止できるか</td><td>Meter、Secondなどのnewtype</td></tr><tr><td>casesが増えた</td><td>状態のenumを整理できるか</td><td>inductiveと遷移関数</td></tr><tr><td>Web定理は通る</td><td>全経路が同じ認可関数を使うか</td><td>PBT・統合テスト・監査</td></tr></tbody></table></div>
+<p>証明が難しいとき、数学を難しくする前にAPIの不変条件を見直します。証明できないものを無理に一つのLean定義へ寄せず、TLA+の状態モデルやPBTの実装propertyへ渡す方が、保証の説明が正確になります。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">実装境界の記録</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>Leanが保証:
+  純粋関数、型、算術、帰納データ
+
+Leanが未保証:
+  DB、時計、ネットワーク、手書き移植
+
+TLA+へ渡す:
+  競合、所有権、保存、状態順序
+
+PBTへ渡す:
+  JSON、実装境界、丸め、外部fake</code></pre></div>
+</div>
+<aside class="callout danger" role="note"><strong>値の名前だけで単位を守らない</strong><p>`distance : ℚ`と`time : ℚ`は、名前を間違えれば加算できます。単位の取り違えが高価なら、型・レビュー・PBTを重ねます。</p></aside>
+</section>
+<section id="practice">
+<h2 id="practice-heading">動かす順序と演習</h2>
+<ol>
+<li>importを通す。</li>
+<li>定義を#checkする。</li>
+<li>具体的なexampleをdecideやnorm_numで確認する。</li>
+<li>一般化してtheoremにする。</li>
+<li>一行だけ壊し、失敗位置を読む。</li>
+<li>本番コードへ移植する場合は接続propertyを置く。</li>
+</ol>
+<h3 id="exercise">演習：ドメイン別に一つずつ書く</h3>
+<p>数学では「リストのreverseを二回すると元に戻る」、物理では「dt=0で位置が変わらない」、ゲームでは「合法なFinインデックスに置くと占有される」、Webでは「guestのdeleteを拒否する」を選びます。各例に、保証・重要性・破壊時の影響をコメントで残します。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">提出物の型</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>定義:
+保証したい性質:
+前提:
+証明:
+実装側で同じ意味だと確認する方法:
+形式化していない境界:
+一行壊したときの失敗:</code></pre></div>
+</div>
+<p>定理の数ではなく、設計上の意思決定がコードに戻っているかを確認します。</p>
+</section>
+<section id="summary">
+<h2 id="summary-heading">まとめ</h2>
+<p>数学では帰納法と代数、物理では単位と保存量、ゲームでは全域性と不変量、Webでは認可と状態を扱いました。どの例も、型・述語・補題によって「正しそう」を前提付きの主張へ変えています。</p>
+<p>Leanが扱わない外部依存を無理に隠さず、TLA+やPBTへ境界を渡します。次章では、時間・並行性・Safety・LivenessをTLA+で表します。</p>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>全域性</dt><dd>定義が入力の全ケースを処理し、未定義の結果を残さない性質。</dd><dt>不変量</dt><dd>操作や遷移の前後で保持される性質。</dd><dt>単位型</dt><dd>MeterやSecondのように、同じ基礎値でも意味を型で分ける設計。</dd><dt>default deny</dt><dd>許可を列挙し、それ以外を拒否する認可設計。</dd><dt>Fin n</dt><dd>0以上n未満のインデックスを表す型。</dd><dt>underflow</dt><dd>自然数などの下限を越えたときに、意図しない値へ折り返す問題。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：単位をLeanの型で分けると、何が防げますか。</summary><div class="answer">距離と時間のように、同じ基礎型の値を誤って加算する混同を型エラーにできます。</div></details><details class="check-item"><summary>問2：`Fin 9`を盤面インデックスに使う理由は何ですか。</summary><div class="answer">0〜8の範囲を型で保証し、盤外アクセスの前提を減らすためです。</div></details><details class="check-item"><summary>問3：認可関数の定理が通っても、Web全体の認可が安全とは限らないのはなぜですか。</summary><div class="answer">キャッシュ、ミドルウェア、別経路、JWTや時計など、関数の外側があるためです。</div></details><details class="check-item"><summary>問4：物理式の代数的同値性と物理法則は何が違いますか。</summary><div class="answer">前者は定義した式の変形、後者は運動方程式や境界条件を含むモデルだからです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="01-lean-basics.html"><small>← 前の章</small><strong>01　Lean 4 基礎</strong></a><a href="03-tlaplus-basics.html"><small>次の章 →</small><strong>03　TLA+ 基礎</strong></a></nav>
+<a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
+</main>
+<script>
+
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var body = document.body;
+
+  function readTheme() {
+    try { return localStorage.getItem("formal-methods-theme"); }
+    catch (error) { return null; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem("formal-methods-theme", theme); }
+    catch (error) { return; }
+  }
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+    else root.removeAttribute("data-theme");
+    var toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+    var dark = theme === "dark" ||
+      (theme !== "light" && window.matchMedia &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    toggle.textContent = dark ? "☀ ライト" : "☾ ダーク";
+    toggle.setAttribute("aria-label", dark ? "ライトテーマに切り替える" : "ダークテーマに切り替える");
+    toggle.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+  var storedTheme = readTheme();
+  applyTheme(storedTheme);
+
+  var themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = current === "dark" || (!current && prefersDark) ? "light" : "dark";
+    saveTheme(next);
+    applyTheme(next);
+  });
+
+  var menuToggle = document.getElementById("menu-toggle");
+  var closeButton = document.getElementById("sidebar-close");
+  var backdrop = document.querySelector(".drawer-backdrop");
+  function closeDrawer() {
+    body.classList.remove("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+  function openDrawer() {
+    body.classList.add("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", function () {
+    body.classList.contains("drawer-open") ? closeDrawer() : openDrawer();
+  });
+  if (closeButton) closeButton.addEventListener("click", closeDrawer);
+  if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".chapter-link").forEach(function (link) {
+    if (link.getAttribute("data-page") === body.getAttribute("data-page")) {
+      link.classList.add("is-current");
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", closeDrawer);
+  });
+
+  var outline = document.getElementById("page-outline");
+  var headings = Array.prototype.slice.call(document.querySelectorAll("main h2[id], main h3[id]"));
+  if (outline) headings.forEach(function (heading) {
+    var link = document.createElement("a");
+    link.href = "#" + heading.id;
+    link.className = "outline-link level-" + heading.tagName.substring(1);
+    link.textContent = heading.textContent;
+    outline.appendChild(link);
+  });
+  function markOutline(id) {
+    if (!outline) return;
+    outline.querySelectorAll("a").forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
+    });
+  }
+  if ("IntersectionObserver" in window && headings.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) markOutline(entry.target.id);
+      });
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    headings.forEach(function (heading) { observer.observe(heading); });
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var languageSets = {
+    lean: {
+      keywords: "theorem lemma def example by fun match with inductive structure namespace where let in if then else type class instance deriving open import",
+      tactics: "intro exact apply constructor cases induction simp simpa rw rfl omega ring linarith norm_num decide aesop have show calc unfold split",
+    },
+    tla: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec TypeOK Invariant Safety Liveness TRUE FALSE UNCHANGED IF THEN ELSE LET IN DOMAIN SUBSET Cardinality Len Append Seq INSTANCE ASSUME THEOREM PROVE WF SF process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    pluscal: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    python: {
+      keywords: "and as assert async await break case class continue def del elif else except finally for from if import in is lambda match nonlocal not or pass raise return try while with yield True False None",
+      tactics: "",
+    },
+    typescript: {
+      keywords: "as async await break case catch class const debugger default delete do else export extends false finally for from function if implements import in instanceof interface let new null of package private protected public return static super switch this throw true try type typeof var void while with yield",
+      tactics: "",
+    },
+    haskell: {
+      keywords: "case class data default deriving do else if import in let module new of then type where forall",
+      tactics: "",
+    },
+    shell: {
+      keywords: "if then else fi for in do done case esac function export cd printf echo",
+      tactics: "",
+    }
+  };
+  function hasWord(set, token) {
+    return set && set.split(/\s+/).indexOf(token) !== -1;
+  }
+  function classifyToken(token, language) {
+    var set = languageSets[language] || languageSets.python;
+    if (token.charCodeAt(0) === 92 && token.charAt(1) === "*") return "hl-comment";
+    if (token.indexOf("--") === 0 || token.indexOf("#") === 0 || token.indexOf("//") === 0 || token.indexOf("/*") === 0 || token.indexOf("/-") === 0 || token.indexOf("(*") === 0 || token.indexOf("\\\\*") === 0) return "hl-comment";
+    if (/^(["'\x60])/.test(token)) return "hl-string";
+    if (/^\d/.test(token)) return "hl-number";
+    if (language === "python" && /^@/.test(token)) return "hl-decorator";
+    if (hasWord(set.tactics, token)) return "hl-function";
+    if (hasWord(set.keywords, token)) return "hl-keyword";
+    var operator = token === "<>" || token === "[]" || token === "~>" || token === "=>" || token === "->" || token === "<-" || token === ":=" || token === "===" || token === "!==" || token === "==" || token === "!=" || token === "<=" || token === ">=" || token === "&&" || token === "||" || token === "++" || token === "--" || token === "=" || token === "~" || token === "#" || token === "'" || token === "|" || token === ":" || token === "<" || token === ">" || token === "+" || token === "*" || token === "/" || token === "-" || token.indexOf("\\\\") !== -1;
+    if (token.charCodeAt(0) === 92 || token.charCodeAt(token.length - 1) === 92) return "hl-operator";
+    if (operator) return "hl-operator";
+    if (/^[A-Za-z_][A-Za-z0-9_']*$/.test(token) && /^[A-Z]/.test(token)) return "hl-function";
+    return "";
+  }
+  function highlight(source, language) {
+    var pattern = /(\\\*[^\n]*|--[^\n]*|#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/-[\s\S]*?-\*|\(\*[\s\S]*?\*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\x60(?:\\.|[^\x60\\])*\x60|\b\d+(?:\.\d+)?\b|@[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_']*|\/\\|\\\/|<>|\[\]|~>|=>|->|<-|:=|===|!==|==|!=|<=|>=|&&|\|\||\+\+|--|[=~#'|:<>+*\/-])/gm;
+    return source.replace(pattern, function (token) {
+      var kind = classifyToken(token, language);
+      return kind ? '<span class="' + kind + '">' + escapeHTML(token) + "</span>" : escapeHTML(token);
+    });
+  }
+  function decorateCode(wrapper) {
+    var code = wrapper.querySelector("code");
+    if (!code) return;
+    var raw = code.textContent.replace(/\n$/, "");
+    wrapper.setAttribute("data-raw", raw);
+    var highlighted = highlight(raw, wrapper.getAttribute("data-lang") || "python");
+    code.innerHTML = highlighted.split("\n").map(function (line, index) {
+      return '<span class="code-line"><span class="code-line-number" aria-hidden="true">' +
+        (index + 1) + '</span><span class="code-line-text">' + (line || " ") +
+        "</span></span>";
+    }).join("\n");
+  }
+  document.querySelectorAll(".code-wrap").forEach(decorateCode);
+
+  function fallbackCopy(raw, done) {
+    var area = document.createElement("textarea");
+    area.value = raw;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try { document.execCommand("copy"); done(); }
+    finally { document.body.removeChild(area); }
+  }
+  function copyCode(button) {
+    var wrapper = button.closest(".code-wrap");
+    var raw = wrapper ? wrapper.getAttribute("data-raw") : "";
+    if (!raw) return;
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "コピー済み";
+      button.setAttribute("aria-label", "コードをコピーしました");
+      window.setTimeout(function () {
+        button.textContent = old;
+        button.setAttribute("aria-label", "コードだけをコピー");
+      }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(raw).then(done).catch(function () { fallbackCopy(raw, done); });
+    } else {
+      fallbackCopy(raw, done);
+    }
+  }
+  document.querySelectorAll(".copy-button").forEach(function (button) {
+    button.addEventListener("click", function () { copyCode(button); });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeDrawer();
+  });
+})();
+
+</script>
+</body>
+</html>

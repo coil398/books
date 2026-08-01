@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="形式手法とテスト技法を実務のコード例で学ぶ日本語HTML教科書">
+<title>Lean・TLA+・PBTを組み合わせる | 形式手法とテスト技法</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --surface-2: #eef2ed;
+  --surface-3: #e4ebe4;
+  --ink: #25312d;
+  --muted: #5d6c65;
+  --faint: #7b8b83;
+  --line: #d3ddd5;
+  --accent: #236b5a;
+  --accent-strong: #174e42;
+  --accent-soft: #d9eee6;
+  --link: #155e9a;
+  --shadow: 0 15px 45px rgba(37, 55, 45, .10);
+  --code-bg: #202c2a;
+  --code-ink: #e8f2eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #e5f1fb;
+  --info-line: #347daf;
+  --warning-bg: #fff3d8;
+  --warning-line: #b27a17;
+  --danger-bg: #fde4e5;
+  --danger-line: #b54a50;
+  --tip-bg: #e6f4e8;
+  --tip-line: #3b8450;
+  --focus: #d67500;
+  --sidebar-width: 18rem;
+  --content-width: 72ch;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18211f;
+    --surface: #202b28;
+    --surface-2: #263632;
+    --surface-3: #30433d;
+    --ink: #e7eee9;
+    --muted: #b6c7bf;
+    --faint: #91a79c;
+    --line: #40544d;
+    --accent: #7ad0b2;
+    --accent-strong: #a1e5ca;
+    --accent-soft: #24473e;
+    --link: #8dcaff;
+    --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+    --code-bg: #101817;
+    --code-ink: #e5f1eb;
+    --code-keyword: #9bd6ff;
+    --code-string: #f2c987;
+    --code-comment: #91aa9d;
+    --code-number: #dfb2ff;
+    --code-operator: #ff9eaa;
+    --code-function: #b8e7c0;
+    --info-bg: #183449;
+    --info-line: #82bce7;
+    --warning-bg: #4a3819;
+    --warning-line: #efc767;
+    --danger-bg: #4d252a;
+    --danger-line: #ef9ca1;
+    --tip-bg: #1d3b29;
+    --tip-line: #91d19b;
+    --focus: #ffc36d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18211f;
+  --surface: #202b28;
+  --surface-2: #263632;
+  --surface-3: #30433d;
+  --ink: #e7eee9;
+  --muted: #b6c7bf;
+  --faint: #91a79c;
+  --line: #40544d;
+  --accent: #7ad0b2;
+  --accent-strong: #a1e5ca;
+  --accent-soft: #24473e;
+  --link: #8dcaff;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+  --code-bg: #101817;
+  --code-ink: #e5f1eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #183449;
+  --info-line: #82bce7;
+  --warning-bg: #4a3819;
+  --warning-line: #efc767;
+  --danger-bg: #4d252a;
+  --danger-line: #ef9ca1;
+  --tip-bg: #1d3b29;
+  --tip-line: #91d19b;
+  --focus: #ffc36d;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+a { color: var(--link); text-underline-offset: .18em; }
+a:hover { color: var(--accent-strong); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip-link {
+  position: fixed; z-index: 50; top: .75rem; left: .75rem;
+  padding: .5rem .75rem; color: #fff; background: var(--accent-strong);
+  border-radius: .5rem; transform: translateY(-160%); transition: transform .2s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.menu-toggle {
+  display: none; position: fixed; z-index: 40; top: .9rem; left: .9rem;
+  width: 2.9rem; height: 2.9rem; border: 1px solid var(--line);
+  border-radius: .75rem; color: var(--ink); background: var(--surface);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.theme-toggle {
+  position: fixed; z-index: 35; top: 1rem; right: 1.25rem;
+  min-width: 6.7rem; padding: .45rem .7rem; border: 1px solid var(--line);
+  border-radius: 999px; color: var(--ink); background: var(--surface);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .08); cursor: pointer;
+}
+.sidebar {
+  position: fixed; z-index: 30; inset: 0 auto 0 0; display: flex;
+  width: var(--sidebar-width); flex-direction: column; padding: 1.25rem 1rem 1.5rem;
+  overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface);
+}
+.brand { display: block; margin: .15rem .5rem 1.15rem; color: var(--ink); font-size: .93rem; font-weight: 800; line-height: 1.45; text-decoration: none; letter-spacing: .04em; }
+.brand small { display: block; margin-top: .3rem; color: var(--muted); font-size: .72rem; font-weight: 500; letter-spacing: 0; }
+.chapter-nav, .page-outline { display: grid; gap: .18rem; }
+.nav-label { margin: 1rem .5rem .35rem; color: var(--faint); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chapter-link, .outline-link { display: block; border-left: 3px solid transparent; border-radius: 0 .45rem .45rem 0; color: var(--muted); text-decoration: none; }
+.chapter-link { padding: .46rem .55rem; font-size: .84rem; line-height: 1.4; }
+.outline-link { padding: .22rem .45rem; font-size: .76rem; line-height: 1.45; }
+.outline-link.level-3 { padding-left: 1.05rem; font-size: .72rem; }
+.chapter-link:hover, .outline-link:hover, .chapter-link.is-current, .outline-link.is-active { border-left-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.sidebar-close { display: none; align-self: flex-end; border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.drawer-backdrop { display: none; }
+main {
+  width: min(var(--content-width), calc(100% - 2rem));
+  margin: 0 auto 0 calc(var(--sidebar-width) + max(2rem, (100vw - var(--sidebar-width) - var(--content-width)) / 2));
+  padding: 4.4rem 0 5rem;
+}
+.chapter-header { margin-bottom: 2.5rem; }
+.eyebrow { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+h1, h2, h3 { color: var(--ink); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+h1 { max-width: 19ch; margin: 0 0 1.1rem; font-size: clamp(2rem, 5vw, 3.35rem); letter-spacing: -.035em; }
+h2 { margin: 3.3rem 0 1rem; padding-top: .25rem; border-top: 1px solid var(--line); font-size: clamp(1.45rem, 3vw, 2rem); }
+h3 { margin: 2rem 0 .65rem; font-size: 1.18rem; }
+p { margin: 0 0 1.1rem; }
+.lead { max-width: 66ch; margin-bottom: 1.5rem; color: var(--muted); font-size: 1.08rem; }
+.chapter-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.meta-card, .learning-box { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: 0 5px 22px rgba(0, 0, 0, .035); }
+.meta-card strong, .learning-box strong { display: block; margin-bottom: .3rem; color: var(--accent-strong); font-size: .78rem; letter-spacing: .06em; }
+.meta-card span { color: var(--muted); font-size: .88rem; }
+.learning-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .85rem; margin: 1.2rem 0 2.5rem; }
+.learning-box { margin: 0; }
+.learning-box h2 { margin: 0 0 .55rem; padding: 0; border: 0; font-size: 1rem; }
+.learning-box ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.learning-box li { margin: .25rem 0; color: var(--muted); font-size: .88rem; }
+.callout { margin: 1.35rem 0 1.6rem; padding: 1rem 1.1rem 1rem 1.25rem; border-left: 5px solid; border-radius: .2rem .8rem .8rem .2rem; background: var(--surface); }
+.callout strong { display: block; margin-bottom: .3rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.info { border-color: var(--info-line); background: var(--info-bg); }
+.callout.warning { border-color: var(--warning-line); background: var(--warning-bg); }
+.callout.danger { border-color: var(--danger-line); background: var(--danger-bg); }
+.callout.tip { border-color: var(--tip-line); background: var(--tip-bg); }
+.term { border-bottom: 2px dotted var(--accent); font-weight: 700; }
+.table-wrap { max-width: 100%; margin: 1.25rem 0 1.7rem; overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+table { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .7rem .85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--accent-strong); background: var(--surface-2); font-weight: 800; }
+tr:last-child td { border-bottom: 0; }
+ul, ol { margin: .7rem 0 1.25rem; padding-left: 1.45rem; }
+li { margin: .38rem 0; }
+blockquote { margin: 1.4rem 0; padding: .75rem 1.1rem; border-left: 4px solid var(--accent); color: var(--muted); background: var(--surface-2); }
+.code-wrap { position: relative; max-width: 100%; margin: 1.35rem 0 1.75rem; overflow: hidden; border: 1px solid #3f5950; border-radius: .8rem; background: var(--code-bg); box-shadow: var(--shadow); }
+.code-toolbar { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; padding: .35rem .55rem .35rem .85rem; border-bottom: 1px solid rgba(255, 255, 255, .13); color: #bcd2c6; background: rgba(255, 255, 255, .055); font-size: .75rem; }
+.code-language { font-weight: 800; letter-spacing: .08em; }
+.copy-button { padding: .25rem .55rem; border: 1px solid rgba(255, 255, 255, .3); border-radius: .45rem; color: #e8f4eb; background: transparent; cursor: pointer; }
+.copy-button:hover, .copy-button:focus-visible { background: rgba(255, 255, 255, .14); }
+.code-scroll { max-width: 100%; overflow-x: auto; }
+pre.code-block { margin: 0; min-width: max-content; padding: .9rem 0 1rem; color: var(--code-ink); font: .86rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+pre code { display: block; }
+.code-line { display: flex; min-height: 1.65em; padding-right: 1rem; }
+.code-line-number { flex: 0 0 3.25rem; padding-right: .8rem; color: #6e8a7e; text-align: right; user-select: none; }
+.code-line-text { display: block; padding-left: .2rem; white-space: pre; }
+.hl-keyword { color: var(--code-keyword); font-weight: 700; }
+.hl-string { color: var(--code-string); }
+.hl-comment { color: var(--code-comment); font-style: italic; }
+.hl-number { color: var(--code-number); }
+.hl-operator { color: var(--code-operator); }
+.hl-function { color: var(--code-function); }
+.hl-decorator { color: #f0a9dc; }
+.glossary { margin-top: 3.5rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface-2); }
+.glossary h2 { margin-top: 0; border: 0; }
+.glossary dl { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: .65rem 1rem; margin: 0; }
+.glossary dt { color: var(--accent-strong); font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+.checks { margin-top: 3rem; }
+.checks h2 { margin-bottom: .8rem; }
+.check-item { margin: .7rem 0; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); }
+.check-item summary { cursor: pointer; font-weight: 700; }
+.answer { margin: .65rem 0 0; padding: .7rem .9rem; color: var(--muted); background: var(--surface-2); }
+.chapter-nav-bottom { display: flex; gap: 1rem; justify-content: space-between; margin-top: 4rem; padding-top: 1.3rem; border-top: 2px solid var(--line); }
+.chapter-nav-bottom a { display: block; max-width: 48%; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-decoration: none; }
+.chapter-nav-bottom a:last-child { margin-left: auto; text-align: right; }
+.chapter-nav-bottom small { display: block; margin-bottom: .2rem; color: var(--muted); }
+.chapter-nav-bottom strong { color: var(--accent-strong); }
+.page-top { display: inline-block; margin-top: 2.2rem; font-size: .85rem; }
+@media (max-width: 1100px) { :root { --sidebar-width: 16rem; } main { margin-left: calc(var(--sidebar-width) + 1.6rem); } }
+@media (max-width: 900px) {
+  .menu-toggle { display: block; }
+  .sidebar { width: min(19rem, 88vw); transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow); }
+  body.drawer-open .sidebar { transform: translateX(0); }
+  .sidebar-close { display: block; font-size: 1.5rem; }
+  .drawer-backdrop { position: fixed; z-index: 25; inset: 0; background: rgba(0, 0, 0, .45); }
+  body.drawer-open .drawer-backdrop { display: block; }
+  main { width: min(var(--content-width), calc(100% - 2rem)); margin: 0 auto; padding-top: 5.1rem; }
+  .theme-toggle { top: .9rem; right: .8rem; }
+}
+@media (max-width: 650px) {
+  .chapter-meta, .learning-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2.1rem; }
+  .glossary dl { display: block; }
+  .glossary dt { margin-top: .9rem; }
+  .glossary dd { margin-top: .15rem; }
+  .chapter-nav-bottom { display: grid; }
+  .chapter-nav-bottom a { max-width: none; }
+  .chapter-nav-bottom a:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #111; --muted: #333; --line: #bbb; --code-bg: #f5f5f5; --code-ink: #111; }
+  .sidebar, .menu-toggle, .theme-toggle, .drawer-backdrop, .copy-button, .page-top { display: none !important; }
+  main { width: 100%; margin: 0; padding: 0; }
+  .chapter-header { padding-top: 0; }
+  .code-wrap { border: 1px solid #777; box-shadow: none; break-inside: avoid; }
+  pre.code-block { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+  .code-line { display: block; }
+  .code-line-number { display: none; }
+  .code-line-text { white-space: pre-wrap; }
+  a { color: #111; }
+  .chapter-nav-bottom { display: none; }
+}
+
+</style>
+</head>
+<body data-page="07-combining">
+<a class="skip-link" href="#main-content">本文へスキップ</a>
+<button id="menu-toggle" class="menu-toggle" type="button" aria-label="章目次を開く" aria-expanded="false" aria-controls="sidebar">☰</button>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="ダークテーマに切り替える" aria-pressed="false">☾ ダーク</button>
+<aside id="sidebar" class="sidebar" aria-label="章目次">
+<button id="sidebar-close" class="sidebar-close" type="button" aria-label="章目次を閉じる">×</button>
+<a class="brand" href="index.html">形式手法とテスト技法<small>Lean 4 / TLA+ / PBT 実務教科書</small></a>
+<div class="nav-label">CHAPTERS</div>
+<nav class="chapter-nav" aria-label="全章">
+<a class="chapter-link" data-page="index" href="index.html">表紙・読み方</a>
+<a class="chapter-link" data-page="00-overview" href="00-overview.html">00　3手法の地図</a>
+<a class="chapter-link" data-page="01-lean-basics" href="01-lean-basics.html">01　Lean 4 基礎</a>
+<a class="chapter-link" data-page="02-lean-examples" href="02-lean-examples.html">02　Lean 実践サンプル</a>
+<a class="chapter-link" data-page="03-tlaplus-basics" href="03-tlaplus-basics.html">03　TLA+ 基礎</a>
+<a class="chapter-link" data-page="04-tlaplus-examples" href="04-tlaplus-examples.html">04　TLA+ 実践サンプル</a>
+<a class="chapter-link" data-page="05-pbt-basics" href="05-pbt-basics.html">05　PBT 基礎</a>
+<a class="chapter-link" data-page="06-pbt-examples" href="06-pbt-examples.html">06　PBT 実践サンプル</a>
+<a class="chapter-link" data-page="07-combining" href="07-combining.html">07　3手法を組み合わせる</a>
+</nav>
+<div class="nav-label">ON THIS PAGE</div>
+<nav id="page-outline" class="page-outline" aria-label="このページの見出し"></nav>
+</aside>
+<div class="drawer-backdrop" aria-hidden="true"></div>
+<main id="main-content">
+<header class="chapter-header"><p class="eyebrow">Chapter 07 · 形式手法とテスト技法</p><h1>Lean・TLA+・PBTを組み合わせる</h1><p>ECの購入フローを題材に、設計・実装・計算を三つの証拠で一気通貫に結びます。</p><div class="chapter-meta"><div class="meta-card"><strong>対象</strong><span>各基礎章を読み、統合の境界を知りたいチーム</span></div><div class="meta-card"><strong>成果物</strong><span>同一題材の保証分担を設計できる</span></div><div class="meta-card"><strong>読む目安</strong><span>80〜120分</span></div></div></header><section class="learning-grid" aria-label="章の案内"><div class="learning-box"><h2>この章で学ぶこと</h2><ul>
+<li>在庫・冪等性をTLA+で設計する</li>
+<li>操作列・競合をPBTで再現する</li>
+<li>金額計算をLeanで固定しCIへ分離する</li>
+</ul></div><div class="learning-box"><h2>前提知識</h2><ul>
+<li>Lean・TLA+・PBTの基礎章</li>
+<li>ECの注文・決済の概念</li>
+<li>CIジョブとfixtureの運用</li>
+</ul></div><div class="learning-box"><h2>所要時間の目安</h2><p>TLA+の反例をPBTへ移し、Leanの定理と移植propertyを対応づけます。</p></div></section><section id="subject">
+<h2 id="subject-heading">一つの題材を三層に分ける</h2>
+<p>題材は、在庫を持つECの購入フローです。注文、決済、再試行、返金、明細計算が混ざるため、<dfn>保証分担</dfn>（一つの主張を複数の手法の適切な範囲へ割り当てること）を設計する練習に向いています。</p>
+<div class="table-wrap"><table><thead><tr><th>層</th><th>保証したい性質</th><th>技術</th><th>証拠の形</th></tr></thead><tbody><tr><td>プロトコル</td><td>在庫は負にならない</td><td>TLA+</td><td>Safetyの検査・反例</td></tr><tr><td>プロトコル</td><td>冪等キーの効果は一度だけ</td><td>TLA+ / PBT</td><td>状態列・操作列</td></tr><tr><td>実装境界</td><td>JSONの往復・入力検証</td><td>PBT</td><td>縮小入力・fixture</td></tr><tr><td>計算</td><td>小計・割引の恒等式</td><td>Lean / PBT</td><td>定理・移植property</td></tr><tr><td>外部依存</td><td>決済遅延・失敗・タイムアウト</td><td>PBT fake</td><td>観測された呼出し</td></tr></tbody></table></div>
+<p>「すべてを一つの道具で」は狙いません。各層の証拠が何を保証し、何を保証しないかを対応表にしてからコードを書きます。</p>
+<aside class="callout tip" role="note"><strong>一気通貫の完了条件</strong><p>TLA+の反例をPBTの操作列へ変換でき、Leanの定理と実装の計算関数の対応を説明でき、CIで三つの結果を別々に保存できれば、統合の骨格ができています。</p></aside>
+</section>
+<section id="tla-model">
+<h2 id="tla-model-heading">TLA+で設計する</h2>
+<p>まず利用者二人、在庫一個、注文キー二つに縮約します。<dfn>冪等キー</dfn>は同じ要求の再送を同じ効果として識別するキーです。購入の判定・在庫減算・注文記録・キー記録を一アクションとし、再送は状態を変えないアクションにします。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Shop ----
+CONSTANT Users, Keys, InitialStock
+VARIABLE stock, orders, applied
+
+Init == /\ stock = InitialStock
+        /\ orders = [u \in Users |-&gt; "none"]
+        /\ applied = {}
+
+Purchase(u, k) == /\ u \in Users
+                  /\ k \in Keys
+                  /\ orders[u] = "none"
+                  /\ k \notin applied
+                  /\ stock &gt; 0
+                  /\ stock' = stock - 1
+                  /\ orders' = [orders EXCEPT ![u] = "paid"]
+                  /\ applied' = applied \cup {k}
+
+Retry(k) == /\ k \in applied
+           /\ UNCHANGED &lt;&lt;stock, orders, applied&gt;&gt;
+
+Next == (\E u \in Users, k \in Keys : Purchase(u, k))
+     \/ (\E k \in Keys : Retry(k))
+
+TypeOK == /\ stock \in Nat
+          /\ orders \in [Users -&gt; {"none", "paid"}]
+          /\ applied \subseteq Keys
+
+Safety == stock &gt;= 0
+AtMostOnce == Cardinality({u \in Users :
+  orders[u] = "paid"}) &lt;= InitialStock
+
+Spec == Init /\ [][Next]_&lt;&lt;stock, orders, applied&gt;&gt;
+==============================================</code></pre></div>
+</div>
+<p>ここで保証するのは、指定した有限集合とアクション粒度です。DBのトランザクション分離、決済サービスの部分成功、キーとpayloadの不一致は、次のモデル拡張かPBTへ渡します。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLC設定</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users = {"alice", "bob"}
+CONSTANT Keys = {"k1", "k2"}
+CONSTANT InitialStock = 1
+INVARIANT TypeOK
+INVARIANT Safety
+INVARIANT AtMostOnce</code></pre></div>
+</div>
+<p>在庫を1にするのは一般性を捨てるためではなく、二人が同時購入できる最小の競合を作るためです。反例が説明できたら、在庫2や3人へ増やします。</p>
+</section>
+<section id="counterexample">
+<h2 id="counterexample-heading">反例を読む</h2>
+<p>誤った仕様で`stock &gt; 0`を外すと、二人の購入が在庫を使い切った後も進みます。違反状態だけでなく、どのアクションが保存不変量を壊したかを読んでください。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">TLCの反例</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>State 1: stock = 1
+         orders = [alice |-&gt; "none", bob |-&gt; "none"]
+Action: Purchase("alice", "k1")
+
+State 2: stock = 0
+         orders = [alice |-&gt; "paid", bob |-&gt; "none"]
+Action: Purchase("bob", "k2")
+
+State 3: stock = -1
+         orders = [alice |-&gt; "paid", bob |-&gt; "paid"]</code></pre></div>
+</div>
+<p>この反例は、実装のif文を一行足すだけでなく、判定と減算をどのトランザクションが占有するかを直す資料です。モデルの修正後は、同じトレースが禁止された理由をコミットメッセージや設計記録に残します。</p>
+<aside class="callout danger" role="note"><strong>反例を仕様に合わせて消さない</strong><p>実装が負の在庫を許すからといってSafetyを弱めると、検査が通る代わりに要求を失います。要求を変更したなら、保存不変量と返金・欠品の契約も一緒に更新します。</p></aside>
+</section>
+<section id="python-implementation">
+<h2 id="python-implementation-heading">TLA+の契約をPythonへ渡す</h2>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / educational implementation</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Order:
+    user: str
+    key: str
+    status: str = "paid"
+
+
+class Shop:
+    def __init__(self, stock: int):
+        self.stock = stock
+        self.orders: dict[str, Order] = {}
+        self.applied: set[str] = set()
+
+    def purchase(self, user: str, key: str) -&gt; bool:
+        if key in self.applied:
+            return True
+        if user in self.orders or self.stock &lt;= 0:
+            return False
+        self.stock -= 1
+        self.orders[user] = Order(user, key)
+        self.applied.add(key)
+        return True</code></pre></div>
+</div>
+<p>これは単一スレッドの教育用実装で、DBトランザクションを表しません。本番ではstockの条件付き更新と注文の一意制約を同じ原子性へ置き、外部決済の結果を状態機械に接続します。</p>
+<div class="table-wrap"><table><thead><tr><th>TLA+の要素</th><th>Pythonの観測点</th><th>未保証の部分</th></tr></thead><tbody><tr><td>stock</td><td>shop.stock</td><td>DBの同時更新</td></tr><tr><td>orders</td><td>shop.orders</td><td>永続化・再起動</td></tr><tr><td>applied</td><td>shop.applied</td><td>一意制約・キーpayload</td></tr><tr><td>Purchase</td><td>purchase()</td><td>トランザクション境界</td></tr><tr><td>Retry</td><td>同じkeyの再呼出し</td><td>HTTP応答方針</td></tr></tbody></table></div>
+</section>
+<section id="pbt-actions">
+<h2 id="pbt-actions-heading">PBTで操作列を生成する</h2>
+<p>TLA+と同じ小さな値域で実装を操作し、在庫・注文・適用キーの関係を確認します。PBTは辞書の更新順や同じキーの再送を混ぜ、接続ミスを見つけます。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+users = st.sampled_from(["alice", "bob", "carol"])
+keys = st.sampled_from(["k1", "k2", "k3"])
+actions = st.lists(st.tuples(users, keys), max_size=30)
+
+
+@given(actions)
+def test_shop_never_over_sells(actions):
+    shop = Shop(1)
+    for user, key in actions:
+        shop.purchase(user, key)
+
+    assert shop.stock &gt;= 0
+    assert len(shop.orders) &lt;= 1
+    assert len(shop.applied) &lt;= 1</code></pre></div>
+</div>
+<p>このpropertyは単一スレッドの順序を調べます。実際の競合を調べるには、インターリーブ可能なfakeやDBの条件付き更新を使います。並行性を逐次操作に置き換えたことで何を失ったかを記録します。</p>
+<h3 id="pbt-idempotency">同じキーの効果を一度だけにする</h3>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>@given(users, keys)
+def test_same_key_has_one_effect(user, key):
+    shop = Shop(1)
+
+    first = shop.purchase(user, key)
+    stock_after_first = shop.stock
+
+    second = shop.purchase(user, key)
+
+    assert first is True
+    assert second is True
+    assert shop.stock == stock_after_first
+    assert len(shop.orders) &lt;= 1</code></pre></div>
+</div>
+<p>再送時にTrueを返すか409を返すかはAPI契約の選択です。共通に必要なのは、同じキーの効果が二度発生しないことです。結果を返す設計なら、最初のレスポンスが保存されていることもモデルに追加します。</p>
+</section>
+<section id="race">
+<h2 id="race-heading">競合をfakeで再現する</h2>
+<p>判定とcommitが分離した実装を、二つのスレッドの代わりに手動インターリーブで再現します。これは修正版ではなく、TLA+の競合を実装粒度で再現するための教材です。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / race fixture</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>class NonAtomicShop:
+    def __init__(self):
+        self.stock = 1
+        self.pending: list[str] = []
+
+    def check(self) -&gt; bool:
+        return self.stock &gt; 0
+
+    def commit(self, user: str):
+        self.stock -= 1
+        self.pending.append(user)
+
+
+def test_interleaving_exposes_race():
+    shop = NonAtomicShop()
+
+    assert shop.check()
+    assert shop.check()
+
+    shop.commit("alice")
+    shop.commit("bob")
+
+    assert shop.stock == -1</code></pre></div>
+</div>
+<p>本番修正後は、同じシナリオが失敗する（つまり在庫が負にならない）ことを確認します。SQLの条件付きUPDATE、行ロック、serializable transactionなど、採用したatomicityをテストの名前と設計文書に置きます。</p>
+<aside class="callout warning" role="note"><strong>競合fixtureを本番コードの代わりにしない</strong><p>race fixtureは欠陥を示すための最小反例です。これが通ることを品質基準にせず、修正版の公開APIとDB境界へ同じ意味のpropertyを移します。</p></aside>
+</section>
+<section id="lean-subtotal">
+<h2 id="lean-subtotal-heading">Leanで金額の中核を切り出す</h2>
+<p>ECの金額計算から、外部依存のない小計と割引を切り出します。Leanは全入力の定理、PBTは移植実装との接続、TLA+は注文の順序を担当します。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def subtotal (prices : List Nat) : Nat :=
+  prices.sum
+
+def discount (amount rate : Nat) : Nat :=
+  amount * rate / 100
+
+def total (prices : List Nat) (rate : Nat) : Nat :=
+  subtotal prices - discount (subtotal prices) rate
+
+theorem subtotal_nonnegative (prices : List Nat) :
+    0 &lt;= subtotal prices := by
+  exact Nat.zero_le _
+
+theorem subtotal_append (xs ys : List Nat) :
+    subtotal (xs ++ ys) = subtotal xs + subtotal ys := by
+  simp [subtotal]</code></pre></div>
+</div>
+<p>保証したいのは、明細を分割して集計しても小計が変わらないことです。返品、税、通貨、丸めを追加するなら、同じ定義へ押し込まず、別の仕様と前提を持つ関数・定理にします。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4 / bounded discount</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+structure Percent where
+  value : Nat
+  bound : value &lt;= 100
+
+def boundedDiscount (amount : Nat) (rate : Percent) : Nat :=
+  amount * rate.value / 100
+
+theorem boundedDiscount_le (amount : Nat) (rate : Percent) :
+    boundedDiscount amount rate &lt;= amount := by
+  unfold boundedDiscount
+  omega</code></pre></div>
+</div>
+<p>rateの範囲をvalidatorに任せる代わりに型へ埋め込むと、boundedDiscountの呼び出し側に前提が残ります。型を作る境界が本当に全API入口を覆うことは、PBT・レビューで確認します。</p>
+</section>
+<section id="lean-connection">
+<h2 id="lean-connection-heading">Leanの定理と移植実装を接続する</h2>
+<p>Leanの`subtotal`とPythonの`python_subtotal`が同じ仕様だと、名前だけでは分かりません。Python側で、Leanの定理と同じ関係をpropertyとして再実装します。これは定理の再証明ではなく、移植境界の経験的な接続証拠です。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / port property</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+def python_subtotal(prices: list[int]) -&gt; int:
+    return sum(prices)
+
+
+@given(
+    st.lists(st.integers(min_value=0), max_size=100),
+    st.lists(st.integers(min_value=0), max_size=100),
+)
+def test_python_subtotal_append(xs, ys):
+    assert python_subtotal(xs + ys) == (
+        python_subtotal(xs) + python_subtotal(ys)
+    )</code></pre></div>
+</div>
+<div class="table-wrap"><table><thead><tr><th>Leanが固定する</th><th>PBTが接続する</th><th>まだ別途必要</th></tr></thead><tbody><tr><td>List Natの小計恒等式</td><td>Pythonのリスト・整数</td><td>固定幅・DB Decimal</td></tr><tr><td>rate&lt;=100の割引上限</td><td>API入力のgenerator</td><td>税・通貨・丸め仕様</td></tr><tr><td>型の不正状態排除</td><td>serialize/deserialize</td><td>HTTP middleware</td></tr><tr><td>純粋関数の結果</td><td>実装の観測値</td><td>ネットワーク・時計</td></tr></tbody></table></div>
+<aside class="callout danger" role="note"><strong>移植propertyを証明と呼ばない</strong><p>有限サンプルの移植確認は、Leanの全入力定理を置き換えません。逆に、Leanの定理だけではPython実装のバグを検出できません。二つを別の証拠として報告します。</p></aside>
+</section>
+<section id="scope">
+<h2 id="scope-heading">どこまで形式化するか</h2>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>Lean</th><th>TLA+</th><th>PBT</th></tr></thead><tbody><tr><td>小計・割引</td><td>定理の中心</td><td>通常は不要</td><td>移植・境界</td></tr><tr><td>在庫競合</td><td>不向き</td><td>中心</td><td>実装再現</td></tr><tr><td>JSON</td><td>型の補助</td><td>抽象化次第</td><td>往復・拒否</td></tr><tr><td>DB障害</td><td>抽象化が大きい</td><td>失敗アクション</td><td>fake・統合</td></tr><tr><td>UI</td><td>通常は対象外</td><td>通常は対象外</td><td>E2E・例示</td></tr></tbody></table></div>
+<p>境界は固定ではありません。高価な性質、再利用される性質、過去に反例が出た性質から深くします。形式化しないことは無視ではなく、別の担当へ明示的に渡すことです。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">境界の記録</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>TLA+:
+  状態、競合、原子性、冪等性、進行性
+
+PBT:
+  API、JSON、時計、外部fake、操作列
+
+Lean:
+  小計、割引、単位、権限、純粋なデータ変換
+
+未保証:
+  実DBの分離、ネットワーク、UI、負荷、運用時計</code></pre></div>
+</div>
+</section>
+<section id="roadmap">
+<h2 id="roadmap-heading">段階的な導入ロードマップ</h2>
+<ol>
+<li>要求変更や過去障害から、保証したい性質を文章にする。</li>
+<li>PBTをCIへ置き、入力境界と実装の反例を集める。</li>
+<li>TLA+で二人・在庫一個・キー二つの最小モデルを検査する。</li>
+<li>Leanで丸め・割引・集計など純粋な計算核を固定する。</li>
+<li>変更レビューで、三つのどの証拠を更新するか確認する。</li>
+</ol>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">CIジョブの分離</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>jobs:
+  tla:
+    steps:
+      - run: java -cp tla2tools.jar tlc2.TLC -config Shop.cfg Shop.tla
+  lean:
+    steps:
+      - run: lake build
+  pbt:
+    steps:
+      - run: pytest -q</code></pre></div>
+</div>
+<p>ジョブを分けると、どの保証が失敗したかが明確になります。成功ログにはTLCの定数、Leanのtoolchain、PBTの例数とprofileを記録します。</p>
+</section>
+<section id="team">
+<h2 id="team-heading">チームへ導入するときの言葉</h2>
+<p>ツール名ではなく、過去障害と最小反例で説明します。「二重請求をゼロにする」と断言せず、「二人・在庫一個のモデルでstockが負にならないことをPRごとに検査する」と範囲を言います。</p>
+<div class="table-wrap"><table><thead><tr><th>失敗</th><th>証拠の形</th><th>修正先</th></tr></thead><tbody><tr><td>TLA+ Safety違反</td><td>状態トレース</td><td>トランザクション設計</td></tr><tr><td>TLA+ Liveness違反</td><td>停滞・無限待ち</td><td>スケジューラ・公平性</td></tr><tr><td>PBT失敗</td><td>縮小入力・操作列</td><td>実装・fixture</td></tr><tr><td>Lean失敗</td><td>未解決ゴール</td><td>定義・前提</td></tr></tbody></table></div>
+<p>証明を書く担当者だけでなく、反例を修正する担当者を決めます。最初の成功は、短い反例が本番障害の原因説明になったときです。</p>
+<aside class="callout tip" role="note"><strong>導入を止めないルール</strong><p>一つのPRで三つのツールを同時に導入せず、まず過去障害を一件だけ再現します。証明できない外部要素は隠さず、テストの担当として記録します。</p></aside>
+</section>
+<section id="review">
+<h2 id="review-heading">変更時のレビュー質問</h2>
+<div class="table-wrap"><table><thead><tr><th>質問</th><th>見る場所</th><th>見落とすと</th></tr></thead><tbody><tr><td>新しい状態はあるか</td><td>TLA+変数・TypeOK</td><td>状態不変条件が抜ける</td></tr><tr><td>新しい順序はあるか</td><td>Next・liveness</td><td>競合や無限待ちが抜ける</td></tr><tr><td>金額の恒等式は変わるか</td><td>Lean theorem</td><td>丸め・前提が古くなる</td></tr><tr><td>入力境界は増えたか</td><td>PBT generator</td><td>未知・最大値が抜ける</td></tr><tr><td>反例を再現できるか</td><td>fixture・seed</td><td>修正が退行する</td></tr><tr><td>未形式化の依存は何か</td><td>fake・統合</td><td>成功範囲を誤認する</td></tr></tbody></table></div>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">変更の流れ</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>要求変更
+  -&gt; 不変条件を更新
+  -&gt; TLA+の遷移と定数を更新
+  -&gt; 最小モデルを検査
+  -&gt; PBTの操作とJSONを更新
+  -&gt; Leanの関数と定理を更新
+  -&gt; CIで三つの証拠を再生成</code></pre></div>
+</div>
+<p>どれか一つだけ更新すると、仕様と実装が静かに乖離します。変更PRには、更新した証拠・範囲が変わらない証拠・未更新の理由を分けて書きます。</p>
+</section>
+<section id="failures">
+<h2 id="failures-heading">統合で起きる失敗</h2>
+<aside class="callout danger" role="note"><strong>仕様を実装の写経にする</strong><p>TLA+のモデルもPBTのモデルも、実装の分岐をそのままコピーしないでください。独立した抽象化と小さなオラクルを置きます。</p></aside>
+<aside class="callout warning" role="note"><strong>定数を一つにして競合を消す</strong><p>最小モデルは2人・容量1から始めます。一人モデルの成功は、同時購入の設計を覆いません。</p></aside>
+<aside class="callout warning" role="note"><strong>Leanと本番コードが乖離する</strong><p>定義の対応表、移植property、固定fixtureを置きます。手書き移植はrefinementの穴になり得ます。</p></aside>
+<aside class="callout info" role="note"><strong>flaky retryを完了扱いしない</strong><p>seed、縮小入力、TLCトレース、Leanの未証明ゴールをartifactとして残し、再実行だけで失敗を隠さないようにします。</p></aside>
+</section>
+<section id="checklist">
+<h2 id="checklist-heading">最終チェックリスト</h2>
+<ul>
+<li>TLA+の状態変数が実装状態に対応している。</li>
+<li>一アクションのatomicityが明示されている。</li>
+<li>PBTが同一キー・空入力・境界値を生成する。</li>
+<li>shrink済みの反例が保存されている。</li>
+<li>Leanの定義と移植実装の対応が明記されている。</li>
+<li>sorryやflaky retryを完了の証拠にしていない。</li>
+<li>形式化しない部分が別テスト・監視で覆われている。</li>
+<li>チームが保証範囲を一文で説明できる。</li>
+</ul>
+<p>統合の価値はツールの数ではなく、設計の順序、実装の入力、計算の全域性を最も適した証拠へ結びつけることです。</p>
+</section>
+<section id="summary">
+<h2 id="summary-heading">まとめ</h2>
+<p>TLA+が同時実行の穴を探し、PBTが実装の境界を揺さぶり、Leanが純粋な計算の核を全入力で固定します。三つの成功は別々に報告し、対応表でつなぎます。</p>
+<p>最初は過去障害を一件だけ選び、最小モデル・最小反例・最小定理を作ります。反例を回帰資産に変え、仕様変更のたびに三つの証拠のどれが動くかをレビューしてください。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">一文で説明する</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>TLA+が同時実行の穴を探し、
+PBTが実装の境界を揺さぶり、
+Leanが純粋な計算の核を全入力で固定する。</code></pre></div>
+</div>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>縦切り</dt><dd>一つの題材を設計・実装・計算などの層へ分けて、端から端まで扱うこと。</dd><dt>冪等キー</dt><dd>同じ要求の再送を同じ効果として識別するキー。</dd><dt>refinement</dt><dd>抽象モデルの振る舞いと具体実装の対応。</dd><dt>移植property</dt><dd>定理と別言語の実装が同じ関係を持つかを経験的に確認するproperty。</dd><dt>fixture</dt><dd>反例や既知の入力を固定したテストデータ。</dd><dt>保証分担</dt><dd>一つの品質主張を複数の手法の適切な範囲へ割り当てること。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：同じ購入フローでTLA+が担当するものは何ですか。</summary><div class="answer">在庫競合、状態遷移、冪等性、原子性、進行性などのプロトコルです。</div></details><details class="check-item"><summary>問2：PBTがTLA+の反例を操作列へ移す価値は何ですか。</summary><div class="answer">抽象モデルで見つけた順序を、実装の型・API・fakeで再現できるためです。</div></details><details class="check-item"><summary>問3：Leanのsubtotal定理は何を保証し、何を保証しませんか。</summary><div class="answer">純粋な小計の恒等式を保証しますが、DB・決済・手書き移植・HTTP経路は保証しません。</div></details><details class="check-item"><summary>問4：統合CIのジョブを分ける理由は何ですか。</summary><div class="answer">どの層の保証が失敗したか、モデル定数やtoolchainの範囲を分けて読めるためです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="06-pbt-examples.html"><small>← 前の章</small><strong>06　PBT 実践サンプル</strong></a><span></span></nav>
+<a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
+</main>
+<script>
+
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var body = document.body;
+
+  function readTheme() {
+    try { return localStorage.getItem("formal-methods-theme"); }
+    catch (error) { return null; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem("formal-methods-theme", theme); }
+    catch (error) { return; }
+  }
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+    else root.removeAttribute("data-theme");
+    var toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+    var dark = theme === "dark" ||
+      (theme !== "light" && window.matchMedia &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    toggle.textContent = dark ? "☀ ライト" : "☾ ダーク";
+    toggle.setAttribute("aria-label", dark ? "ライトテーマに切り替える" : "ダークテーマに切り替える");
+    toggle.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+  var storedTheme = readTheme();
+  applyTheme(storedTheme);
+
+  var themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = current === "dark" || (!current && prefersDark) ? "light" : "dark";
+    saveTheme(next);
+    applyTheme(next);
+  });
+
+  var menuToggle = document.getElementById("menu-toggle");
+  var closeButton = document.getElementById("sidebar-close");
+  var backdrop = document.querySelector(".drawer-backdrop");
+  function closeDrawer() {
+    body.classList.remove("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+  function openDrawer() {
+    body.classList.add("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", function () {
+    body.classList.contains("drawer-open") ? closeDrawer() : openDrawer();
+  });
+  if (closeButton) closeButton.addEventListener("click", closeDrawer);
+  if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".chapter-link").forEach(function (link) {
+    if (link.getAttribute("data-page") === body.getAttribute("data-page")) {
+      link.classList.add("is-current");
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", closeDrawer);
+  });
+
+  var outline = document.getElementById("page-outline");
+  var headings = Array.prototype.slice.call(document.querySelectorAll("main h2[id], main h3[id]"));
+  if (outline) headings.forEach(function (heading) {
+    var link = document.createElement("a");
+    link.href = "#" + heading.id;
+    link.className = "outline-link level-" + heading.tagName.substring(1);
+    link.textContent = heading.textContent;
+    outline.appendChild(link);
+  });
+  function markOutline(id) {
+    if (!outline) return;
+    outline.querySelectorAll("a").forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
+    });
+  }
+  if ("IntersectionObserver" in window && headings.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) markOutline(entry.target.id);
+      });
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    headings.forEach(function (heading) { observer.observe(heading); });
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var languageSets = {
+    lean: {
+      keywords: "theorem lemma def example by fun match with inductive structure namespace where let in if then else type class instance deriving open import",
+      tactics: "intro exact apply constructor cases induction simp simpa rw rfl omega ring linarith norm_num decide aesop have show calc unfold split",
+    },
+    tla: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec TypeOK Invariant Safety Liveness TRUE FALSE UNCHANGED IF THEN ELSE LET IN DOMAIN SUBSET Cardinality Len Append Seq INSTANCE ASSUME THEOREM PROVE WF SF process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    pluscal: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    python: {
+      keywords: "and as assert async await break case class continue def del elif else except finally for from if import in is lambda match nonlocal not or pass raise return try while with yield True False None",
+      tactics: "",
+    },
+    typescript: {
+      keywords: "as async await break case catch class const debugger default delete do else export extends false finally for from function if implements import in instanceof interface let new null of package private protected public return static super switch this throw true try type typeof var void while with yield",
+      tactics: "",
+    },
+    haskell: {
+      keywords: "case class data default deriving do else if import in let module new of then type where forall",
+      tactics: "",
+    },
+    shell: {
+      keywords: "if then else fi for in do done case esac function export cd printf echo",
+      tactics: "",
+    }
+  };
+  function hasWord(set, token) {
+    return set && set.split(/\s+/).indexOf(token) !== -1;
+  }
+  function classifyToken(token, language) {
+    var set = languageSets[language] || languageSets.python;
+    if (token.charCodeAt(0) === 92 && token.charAt(1) === "*") return "hl-comment";
+    if (token.indexOf("--") === 0 || token.indexOf("#") === 0 || token.indexOf("//") === 0 || token.indexOf("/*") === 0 || token.indexOf("/-") === 0 || token.indexOf("(*") === 0 || token.indexOf("\\\\*") === 0) return "hl-comment";
+    if (/^(["'\x60])/.test(token)) return "hl-string";
+    if (/^\d/.test(token)) return "hl-number";
+    if (language === "python" && /^@/.test(token)) return "hl-decorator";
+    if (hasWord(set.tactics, token)) return "hl-function";
+    if (hasWord(set.keywords, token)) return "hl-keyword";
+    var operator = token === "<>" || token === "[]" || token === "~>" || token === "=>" || token === "->" || token === "<-" || token === ":=" || token === "===" || token === "!==" || token === "==" || token === "!=" || token === "<=" || token === ">=" || token === "&&" || token === "||" || token === "++" || token === "--" || token === "=" || token === "~" || token === "#" || token === "'" || token === "|" || token === ":" || token === "<" || token === ">" || token === "+" || token === "*" || token === "/" || token === "-" || token.indexOf("\\\\") !== -1;
+    if (token.charCodeAt(0) === 92 || token.charCodeAt(token.length - 1) === 92) return "hl-operator";
+    if (operator) return "hl-operator";
+    if (/^[A-Za-z_][A-Za-z0-9_']*$/.test(token) && /^[A-Z]/.test(token)) return "hl-function";
+    return "";
+  }
+  function highlight(source, language) {
+    var pattern = /(\\\*[^\n]*|--[^\n]*|#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/-[\s\S]*?-\*|\(\*[\s\S]*?\*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\x60(?:\\.|[^\x60\\])*\x60|\b\d+(?:\.\d+)?\b|@[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_']*|\/\\|\\\/|<>|\[\]|~>|=>|->|<-|:=|===|!==|==|!=|<=|>=|&&|\|\||\+\+|--|[=~#'|:<>+*\/-])/gm;
+    return source.replace(pattern, function (token) {
+      var kind = classifyToken(token, language);
+      return kind ? '<span class="' + kind + '">' + escapeHTML(token) + "</span>" : escapeHTML(token);
+    });
+  }
+  function decorateCode(wrapper) {
+    var code = wrapper.querySelector("code");
+    if (!code) return;
+    var raw = code.textContent.replace(/\n$/, "");
+    wrapper.setAttribute("data-raw", raw);
+    var highlighted = highlight(raw, wrapper.getAttribute("data-lang") || "python");
+    code.innerHTML = highlighted.split("\n").map(function (line, index) {
+      return '<span class="code-line"><span class="code-line-number" aria-hidden="true">' +
+        (index + 1) + '</span><span class="code-line-text">' + (line || " ") +
+        "</span></span>";
+    }).join("\n");
+  }
+  document.querySelectorAll(".code-wrap").forEach(decorateCode);
+
+  function fallbackCopy(raw, done) {
+    var area = document.createElement("textarea");
+    area.value = raw;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try { document.execCommand("copy"); done(); }
+    finally { document.body.removeChild(area); }
+  }
+  function copyCode(button) {
+    var wrapper = button.closest(".code-wrap");
+    var raw = wrapper ? wrapper.getAttribute("data-raw") : "";
+    if (!raw) return;
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "コピー済み";
+      button.setAttribute("aria-label", "コードをコピーしました");
+      window.setTimeout(function () {
+        button.textContent = old;
+        button.setAttribute("aria-label", "コードだけをコピー");
+      }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(raw).then(done).catch(function () { fallbackCopy(raw, done); });
+    } else {
+      fallbackCopy(raw, done);
+    }
+  }
+  document.querySelectorAll(".copy-button").forEach(function (button) {
+    button.addEventListener("click", function () { copyCode(button); });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeDrawer();
+  });
+})();
+
+</script>
+</body>
+</html>

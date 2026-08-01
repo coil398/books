@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="形式手法とテスト技法を実務のコード例で学ぶ日本語HTML教科書">
+<title>形式手法とテスト技法 | 形式手法とテスト技法</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --surface-2: #eef2ed;
+  --surface-3: #e4ebe4;
+  --ink: #25312d;
+  --muted: #5d6c65;
+  --faint: #7b8b83;
+  --line: #d3ddd5;
+  --accent: #236b5a;
+  --accent-strong: #174e42;
+  --accent-soft: #d9eee6;
+  --link: #155e9a;
+  --shadow: 0 15px 45px rgba(37, 55, 45, .10);
+  --code-bg: #202c2a;
+  --code-ink: #e8f2eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #e5f1fb;
+  --info-line: #347daf;
+  --warning-bg: #fff3d8;
+  --warning-line: #b27a17;
+  --danger-bg: #fde4e5;
+  --danger-line: #b54a50;
+  --tip-bg: #e6f4e8;
+  --tip-line: #3b8450;
+  --focus: #d67500;
+  --sidebar-width: 18rem;
+  --content-width: 72ch;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18211f;
+    --surface: #202b28;
+    --surface-2: #263632;
+    --surface-3: #30433d;
+    --ink: #e7eee9;
+    --muted: #b6c7bf;
+    --faint: #91a79c;
+    --line: #40544d;
+    --accent: #7ad0b2;
+    --accent-strong: #a1e5ca;
+    --accent-soft: #24473e;
+    --link: #8dcaff;
+    --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+    --code-bg: #101817;
+    --code-ink: #e5f1eb;
+    --code-keyword: #9bd6ff;
+    --code-string: #f2c987;
+    --code-comment: #91aa9d;
+    --code-number: #dfb2ff;
+    --code-operator: #ff9eaa;
+    --code-function: #b8e7c0;
+    --info-bg: #183449;
+    --info-line: #82bce7;
+    --warning-bg: #4a3819;
+    --warning-line: #efc767;
+    --danger-bg: #4d252a;
+    --danger-line: #ef9ca1;
+    --tip-bg: #1d3b29;
+    --tip-line: #91d19b;
+    --focus: #ffc36d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18211f;
+  --surface: #202b28;
+  --surface-2: #263632;
+  --surface-3: #30433d;
+  --ink: #e7eee9;
+  --muted: #b6c7bf;
+  --faint: #91a79c;
+  --line: #40544d;
+  --accent: #7ad0b2;
+  --accent-strong: #a1e5ca;
+  --accent-soft: #24473e;
+  --link: #8dcaff;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+  --code-bg: #101817;
+  --code-ink: #e5f1eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #183449;
+  --info-line: #82bce7;
+  --warning-bg: #4a3819;
+  --warning-line: #efc767;
+  --danger-bg: #4d252a;
+  --danger-line: #ef9ca1;
+  --tip-bg: #1d3b29;
+  --tip-line: #91d19b;
+  --focus: #ffc36d;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+a { color: var(--link); text-underline-offset: .18em; }
+a:hover { color: var(--accent-strong); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip-link {
+  position: fixed; z-index: 50; top: .75rem; left: .75rem;
+  padding: .5rem .75rem; color: #fff; background: var(--accent-strong);
+  border-radius: .5rem; transform: translateY(-160%); transition: transform .2s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.menu-toggle {
+  display: none; position: fixed; z-index: 40; top: .9rem; left: .9rem;
+  width: 2.9rem; height: 2.9rem; border: 1px solid var(--line);
+  border-radius: .75rem; color: var(--ink); background: var(--surface);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.theme-toggle {
+  position: fixed; z-index: 35; top: 1rem; right: 1.25rem;
+  min-width: 6.7rem; padding: .45rem .7rem; border: 1px solid var(--line);
+  border-radius: 999px; color: var(--ink); background: var(--surface);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .08); cursor: pointer;
+}
+.sidebar {
+  position: fixed; z-index: 30; inset: 0 auto 0 0; display: flex;
+  width: var(--sidebar-width); flex-direction: column; padding: 1.25rem 1rem 1.5rem;
+  overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface);
+}
+.brand { display: block; margin: .15rem .5rem 1.15rem; color: var(--ink); font-size: .93rem; font-weight: 800; line-height: 1.45; text-decoration: none; letter-spacing: .04em; }
+.brand small { display: block; margin-top: .3rem; color: var(--muted); font-size: .72rem; font-weight: 500; letter-spacing: 0; }
+.chapter-nav, .page-outline { display: grid; gap: .18rem; }
+.nav-label { margin: 1rem .5rem .35rem; color: var(--faint); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chapter-link, .outline-link { display: block; border-left: 3px solid transparent; border-radius: 0 .45rem .45rem 0; color: var(--muted); text-decoration: none; }
+.chapter-link { padding: .46rem .55rem; font-size: .84rem; line-height: 1.4; }
+.outline-link { padding: .22rem .45rem; font-size: .76rem; line-height: 1.45; }
+.outline-link.level-3 { padding-left: 1.05rem; font-size: .72rem; }
+.chapter-link:hover, .outline-link:hover, .chapter-link.is-current, .outline-link.is-active { border-left-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.sidebar-close { display: none; align-self: flex-end; border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.drawer-backdrop { display: none; }
+main {
+  width: min(var(--content-width), calc(100% - 2rem));
+  margin: 0 auto 0 calc(var(--sidebar-width) + max(2rem, (100vw - var(--sidebar-width) - var(--content-width)) / 2));
+  padding: 4.4rem 0 5rem;
+}
+.chapter-header { margin-bottom: 2.5rem; }
+.eyebrow { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+h1, h2, h3 { color: var(--ink); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+h1 { max-width: 19ch; margin: 0 0 1.1rem; font-size: clamp(2rem, 5vw, 3.35rem); letter-spacing: -.035em; }
+h2 { margin: 3.3rem 0 1rem; padding-top: .25rem; border-top: 1px solid var(--line); font-size: clamp(1.45rem, 3vw, 2rem); }
+h3 { margin: 2rem 0 .65rem; font-size: 1.18rem; }
+p { margin: 0 0 1.1rem; }
+.lead { max-width: 66ch; margin-bottom: 1.5rem; color: var(--muted); font-size: 1.08rem; }
+.chapter-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.meta-card, .learning-box { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: 0 5px 22px rgba(0, 0, 0, .035); }
+.meta-card strong, .learning-box strong { display: block; margin-bottom: .3rem; color: var(--accent-strong); font-size: .78rem; letter-spacing: .06em; }
+.meta-card span { color: var(--muted); font-size: .88rem; }
+.learning-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .85rem; margin: 1.2rem 0 2.5rem; }
+.learning-box { margin: 0; }
+.learning-box h2 { margin: 0 0 .55rem; padding: 0; border: 0; font-size: 1rem; }
+.learning-box ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.learning-box li { margin: .25rem 0; color: var(--muted); font-size: .88rem; }
+.callout { margin: 1.35rem 0 1.6rem; padding: 1rem 1.1rem 1rem 1.25rem; border-left: 5px solid; border-radius: .2rem .8rem .8rem .2rem; background: var(--surface); }
+.callout strong { display: block; margin-bottom: .3rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.info { border-color: var(--info-line); background: var(--info-bg); }
+.callout.warning { border-color: var(--warning-line); background: var(--warning-bg); }
+.callout.danger { border-color: var(--danger-line); background: var(--danger-bg); }
+.callout.tip { border-color: var(--tip-line); background: var(--tip-bg); }
+.term { border-bottom: 2px dotted var(--accent); font-weight: 700; }
+.table-wrap { max-width: 100%; margin: 1.25rem 0 1.7rem; overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+table { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .7rem .85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--accent-strong); background: var(--surface-2); font-weight: 800; }
+tr:last-child td { border-bottom: 0; }
+ul, ol { margin: .7rem 0 1.25rem; padding-left: 1.45rem; }
+li { margin: .38rem 0; }
+blockquote { margin: 1.4rem 0; padding: .75rem 1.1rem; border-left: 4px solid var(--accent); color: var(--muted); background: var(--surface-2); }
+.code-wrap { position: relative; max-width: 100%; margin: 1.35rem 0 1.75rem; overflow: hidden; border: 1px solid #3f5950; border-radius: .8rem; background: var(--code-bg); box-shadow: var(--shadow); }
+.code-toolbar { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; padding: .35rem .55rem .35rem .85rem; border-bottom: 1px solid rgba(255, 255, 255, .13); color: #bcd2c6; background: rgba(255, 255, 255, .055); font-size: .75rem; }
+.code-language { font-weight: 800; letter-spacing: .08em; }
+.copy-button { padding: .25rem .55rem; border: 1px solid rgba(255, 255, 255, .3); border-radius: .45rem; color: #e8f4eb; background: transparent; cursor: pointer; }
+.copy-button:hover, .copy-button:focus-visible { background: rgba(255, 255, 255, .14); }
+.code-scroll { max-width: 100%; overflow-x: auto; }
+pre.code-block { margin: 0; min-width: max-content; padding: .9rem 0 1rem; color: var(--code-ink); font: .86rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+pre code { display: block; }
+.code-line { display: flex; min-height: 1.65em; padding-right: 1rem; }
+.code-line-number { flex: 0 0 3.25rem; padding-right: .8rem; color: #6e8a7e; text-align: right; user-select: none; }
+.code-line-text { display: block; padding-left: .2rem; white-space: pre; }
+.hl-keyword { color: var(--code-keyword); font-weight: 700; }
+.hl-string { color: var(--code-string); }
+.hl-comment { color: var(--code-comment); font-style: italic; }
+.hl-number { color: var(--code-number); }
+.hl-operator { color: var(--code-operator); }
+.hl-function { color: var(--code-function); }
+.hl-decorator { color: #f0a9dc; }
+.glossary { margin-top: 3.5rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface-2); }
+.glossary h2 { margin-top: 0; border: 0; }
+.glossary dl { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: .65rem 1rem; margin: 0; }
+.glossary dt { color: var(--accent-strong); font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+.checks { margin-top: 3rem; }
+.checks h2 { margin-bottom: .8rem; }
+.check-item { margin: .7rem 0; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); }
+.check-item summary { cursor: pointer; font-weight: 700; }
+.answer { margin: .65rem 0 0; padding: .7rem .9rem; color: var(--muted); background: var(--surface-2); }
+.chapter-nav-bottom { display: flex; gap: 1rem; justify-content: space-between; margin-top: 4rem; padding-top: 1.3rem; border-top: 2px solid var(--line); }
+.chapter-nav-bottom a { display: block; max-width: 48%; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-decoration: none; }
+.chapter-nav-bottom a:last-child { margin-left: auto; text-align: right; }
+.chapter-nav-bottom small { display: block; margin-bottom: .2rem; color: var(--muted); }
+.chapter-nav-bottom strong { color: var(--accent-strong); }
+.page-top { display: inline-block; margin-top: 2.2rem; font-size: .85rem; }
+@media (max-width: 1100px) { :root { --sidebar-width: 16rem; } main { margin-left: calc(var(--sidebar-width) + 1.6rem); } }
+@media (max-width: 900px) {
+  .menu-toggle { display: block; }
+  .sidebar { width: min(19rem, 88vw); transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow); }
+  body.drawer-open .sidebar { transform: translateX(0); }
+  .sidebar-close { display: block; font-size: 1.5rem; }
+  .drawer-backdrop { position: fixed; z-index: 25; inset: 0; background: rgba(0, 0, 0, .45); }
+  body.drawer-open .drawer-backdrop { display: block; }
+  main { width: min(var(--content-width), calc(100% - 2rem)); margin: 0 auto; padding-top: 5.1rem; }
+  .theme-toggle { top: .9rem; right: .8rem; }
+}
+@media (max-width: 650px) {
+  .chapter-meta, .learning-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2.1rem; }
+  .glossary dl { display: block; }
+  .glossary dt { margin-top: .9rem; }
+  .glossary dd { margin-top: .15rem; }
+  .chapter-nav-bottom { display: grid; }
+  .chapter-nav-bottom a { max-width: none; }
+  .chapter-nav-bottom a:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #111; --muted: #333; --line: #bbb; --code-bg: #f5f5f5; --code-ink: #111; }
+  .sidebar, .menu-toggle, .theme-toggle, .drawer-backdrop, .copy-button, .page-top { display: none !important; }
+  main { width: 100%; margin: 0; padding: 0; }
+  .chapter-header { padding-top: 0; }
+  .code-wrap { border: 1px solid #777; box-shadow: none; break-inside: avoid; }
+  pre.code-block { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+  .code-line { display: block; }
+  .code-line-number { display: none; }
+  .code-line-text { white-space: pre-wrap; }
+  a { color: #111; }
+  .chapter-nav-bottom { display: none; }
+}
+
+</style>
+</head>
+<body data-page="index">
+<a class="skip-link" href="#main-content">本文へスキップ</a>
+<button id="menu-toggle" class="menu-toggle" type="button" aria-label="章目次を開く" aria-expanded="false" aria-controls="sidebar">☰</button>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="ダークテーマに切り替える" aria-pressed="false">☾ ダーク</button>
+<aside id="sidebar" class="sidebar" aria-label="章目次">
+<button id="sidebar-close" class="sidebar-close" type="button" aria-label="章目次を閉じる">×</button>
+<a class="brand" href="index.html">形式手法とテスト技法<small>Lean 4 / TLA+ / PBT 実務教科書</small></a>
+<div class="nav-label">CHAPTERS</div>
+<nav class="chapter-nav" aria-label="全章">
+<a class="chapter-link" data-page="index" href="index.html">表紙・読み方</a>
+<a class="chapter-link" data-page="00-overview" href="00-overview.html">00　3手法の地図</a>
+<a class="chapter-link" data-page="01-lean-basics" href="01-lean-basics.html">01　Lean 4 基礎</a>
+<a class="chapter-link" data-page="02-lean-examples" href="02-lean-examples.html">02　Lean 実践サンプル</a>
+<a class="chapter-link" data-page="03-tlaplus-basics" href="03-tlaplus-basics.html">03　TLA+ 基礎</a>
+<a class="chapter-link" data-page="04-tlaplus-examples" href="04-tlaplus-examples.html">04　TLA+ 実践サンプル</a>
+<a class="chapter-link" data-page="05-pbt-basics" href="05-pbt-basics.html">05　PBT 基礎</a>
+<a class="chapter-link" data-page="06-pbt-examples" href="06-pbt-examples.html">06　PBT 実践サンプル</a>
+<a class="chapter-link" data-page="07-combining" href="07-combining.html">07　3手法を組み合わせる</a>
+</nav>
+<div class="nav-label">ON THIS PAGE</div>
+<nav id="page-outline" class="page-outline" aria-label="このページの見出し"></nav>
+</aside>
+<div class="drawer-backdrop" aria-hidden="true"></div>
+<main id="main-content">
+<header class="chapter-header"><p class="eyebrow">Chapter Cover · 形式手法とテスト技法</p><h1>形式手法とテスト技法</h1><p>Lean 4・TLA+・Property-Based Testingを、実務で「何を保証し、どこに穴が残るか」から学ぶ日本語HTML教科書です。</p><div class="chapter-meta"><div class="meta-card"><strong>対象</strong><span>現役エンジニア、形式手法は初めて</span></div><div class="meta-card"><strong>成果物</strong><span>三手法の役割と読み進め方</span></div><div class="meta-card"><strong>読む目安</strong><span>20〜30分</span></div></div></header><section class="learning-grid" aria-label="章の案内"><div class="learning-box"><h2>この章で学ぶこと</h2><ul>
+<li>保証を対象・前提・性質・証拠へ分解する</li>
+<li>三手法の境界と導入順序をつかむ</li>
+<li>自分の課題から次章を選ぶ</li>
+</ul></div><div class="learning-box"><h2>前提知識</h2><ul>
+<li>型付き言語の基礎</li>
+<li>ユニットテストの読解</li>
+<li>ターミナルを使う経験</li>
+</ul></div><div class="learning-box"><h2>所要時間の目安</h2><p>まずはこの表紙と00章を読み、過去障害を一つ題材にします。</p></div></section><section id="start">
+<h2 id="start-heading">この本の読み方</h2>
+<p>このHTML版は、形式手法を「数学者だけが使う証明道具」としてではなく、現役のソフトウェアエンジニアが設計レビューとCIに組み込むための教科書としてまとめたものです。<dfn>形式手法</dfn>とは、仕様や実装を数学的に扱い、テストだけでは届きにくい範囲を証拠にする技術群です。</p>
+<p>最初からすべてを証明する必要はありません。まず、壊れると高価な性質を一つ選び、対象・前提・保証・証拠を分けて書きます。その一文が書ければ、どの道具を使うかはかなり明確になります。</p>
+<aside class="callout tip" role="note"><strong>最初の30分でやること</strong><p>過去の障害を一つ選び、「どの状態で」「どの順番で」「何が起きたか」を短く記録してください。二重購入ならTLA+、金額計算ならLean、未知の入力ならPBTが入口になります。</p></aside>
+</section>
+<section id="map">
+<h2 id="map-heading">三手法を1画面で比較する</h2>
+<p>三つの技術は競合する製品ではなく、異なる層を担当するレンズです。<dfn>Lean</dfn>は定義と証明項を検査し、<dfn>TLA+</dfn>は状態遷移を列挙し、<dfn>Property-Based Testing（PBT）</dfn>は実装を生成入力で実行します。</p>
+<div class="table-wrap"><table><thead><tr><th>手法</th><th>主な問い</th><th>網羅する範囲</th><th>証拠の形</th><th>得意な失敗</th></tr></thead><tbody><tr><td>Lean</td><td>この式・関数は前提から必ず性質を満たすか</td><td>形式化した全入力</td><td>型検査済みの定理</td><td>丸め、集計、型の不整合</td></tr><tr><td>TLA+ / TLC</td><td>この状態から競合や停止が起きないか</td><td>有限に切った到達可能状態</td><td>反例トレースまたは検査成功</td><td>競合、原子性、再試行、進行</td></tr><tr><td>PBT</td><td>実装を多様な入力・操作列で動かすとどうか</td><td>生成された有限サンプル</td><td>縮小入力、seed、回帰fixture</td><td>境界値、シリアライズ、接続不備</td></tr></tbody></table></div>
+<p>「100万件通ったから証明済み」「TLCが通ったから本番も安全」「Leanの定理があるから移植コードも同じ」という読み替えは危険です。証拠には必ず、対象・前提・範囲・ツール版を添えます。</p>
+</section>
+<section id="guarantee">
+<h2 id="guarantee-heading">保証を四つに分解する</h2>
+<h3 id="guarantee-four">対象・前提・性質・証拠</h3>
+<p>「APIは安全」のような文は、レビューで反証も再現もできません。次の四つ組にすると、何を調べているかが見えるようになります。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>書く内容</th><th>購入フローの例</th></tr></thead><tbody><tr><td>対象</td><td>状態・関数・境界を具体化</td><td>stock、orders、subtotal</td></tr><tr><td>前提</td><td>値域、ユーザー数、原子性、時計</td><td>ユーザー2人、在庫1、DB更新は原子的</td></tr><tr><td>性質</td><td>常に・いつか・往復・単調性</td><td>stockは負にならない</td></tr><tr><td>証拠</td><td>定理、モデル検査、テスト結果</td><td>TLCのSafety、PBTの反例なし</td></tr></tbody></table></div>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">記録テンプレート</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>対象:
+前提:
+保証したい性質:
+保証しないこと:
+証拠の種類:
+入力・状態の範囲:
+ツールとバージョン:
+反例の保存場所:
+担当者:</code></pre></div>
+</div>
+<aside class="callout warning" role="note"><strong>前提を省くと証拠は再利用できない</strong><p>在庫1のモデルで安全でも、在庫100やキャンセルを含む実装の安全を自動的に意味しません。範囲が変わったときは、モデル定数・generator・定理のどれを更新するかをレビューします。</p></aside>
+</section>
+<section id="lean-role">
+<h2 id="lean-role-heading">Leanの役割：計算の核を全入力で固定する</h2>
+<p>Leanは<dfn>証明支援系</dfn>です。定義・型・命題を一つの言語で書き、コンパイラが受け入れた証明項だけを残します。純粋関数、データ構造、保存量、権限表のように、入力と出力の関係を数学的に切り出せる対象に向きます。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def subtotal (prices : List Nat) : Nat := prices.sum
+
+theorem subtotal_append (xs ys : List Nat) :
+    subtotal (xs ++ ys) = subtotal xs + subtotal ys := by
+  simp [subtotal]</code></pre></div>
+</div>
+<p>ここで保証しているのは「明細を二つに分けて計算しても小計が変わらない」という恒等式です。DBが二重に呼ばれないことや、画面に正しい通貨記号が出ることは、この定理の対象外なので別の証拠に置きます。</p>
+<aside class="callout danger" role="note"><strong>定理と本番実装を同一視しない</strong><p>別言語へ手書き移植した関数がLeanの定義と同じ意味だとは限りません。移植境界にはPBTやgolden testを置き、さらに重要なら生成コードやrefinementの対応を管理します。</p></aside>
+</section>
+<section id="tla-role">
+<h2 id="tla-role-heading">TLA+の役割：順番と同時実行を壊してみる</h2>
+<p>TLA+は<dfn>状態遷移</dfn>を中心に仕様を書きます。`Init`が初期状態、`Next`が一回のアクション、`Spec`が実行列です。<dfn>モデル検査</dfn>では、定数を小さく限定した状態空間をTLCが探索し、性質を破る最短に近いトレースを返します。</p>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE Shop ----
+CONSTANT Users, InitialStock
+VARIABLE stock, orders
+
+Init == /\ stock = InitialStock
+        /\ orders = [u \in Users |-&gt; "none"]
+Purchase(u) == /\ orders[u] = "none"
+                /\ stock &gt; 0
+                /\ stock' = stock - 1
+                /\ orders' = [orders EXCEPT ![u] = "paid"]
+Next == \E u \in Users : Purchase(u)
+Safety == stock &gt;= 0
+Spec == Init /\ [][Next]_&lt;&lt;stock, orders&gt;&gt;
+================================</code></pre></div>
+</div>
+<p>このモデルが保証するのは、指定したユーザー集合・在庫数・一アクションの粒度で到達可能な状態にSafety違反がないことです。ネットワーク遅延、DBの分離レベル、実際のタイムアウトを落としているなら、その境界を別途モデル化するかPBTへ渡します。</p>
+<aside class="callout warning" role="note"><strong>TLCの成功は「範囲付きの成功」</strong><p>定数を一人にすると競合が消えます。まず二人・容量一で反例を探し、その後に必要な変数だけ増やします。状態爆発を避けるために小さくするのと、競合を消すために小さくするのは別です。</p></aside>
+</section>
+<section id="pbt-role">
+<h2 id="pbt-role-heading">PBTの役割：実装境界を大量に揺さぶる</h2>
+<p>PBTは「ランダムな入力を投げる」だけではありません。先に<dfn>性質</dfn>を決め、現実の制約を持つ<dfn>ジェネレータ</dfn>で入力を作り、失敗時は<dfn>shrink</dfn>で原因の小さい例へ縮めます。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+def encode_total(xs: list[int]) -&gt; int:
+    return sum(xs)
+
+@given(st.lists(st.integers(min_value=0), max_size=30))
+def test_append_property(xs):
+    assert encode_total(xs + []) == encode_total(xs)</code></pre></div>
+</div>
+<p>この例は空リストを追加しても結果が変わらないという性質を、実装上で何度も確認します。生成器が負数を除外しているなら、負数を含む契約を保証してはいません。生成器の制約はテストコードの細部ではなく、保証範囲そのものです。</p>
+<aside class="callout info" role="note"><strong>PBTの成果物は失敗入力</strong><p>テストが通ったというログより、縮小後の入力・seed・ライブラリ版・性質名を残す方が、次の修正に役立ちます。反例は固定回帰テストに昇格させ、一般性はPBTへ残します。</p></aside>
+</section>
+<section id="same-bug">
+<h2 id="same-bug-heading">同じ障害を三つの角度で読む</h2>
+<h3 id="same-bug-web">在庫一個を二人が買う</h3>
+<p>要求を「二人の購入操作が同時に来ても在庫が負にならない」とします。この文を、設計・実装・計算の三つに分けると、各技術の責任範囲が重なりすぎません。</p>
+<div class="table-wrap"><table><thead><tr><th>層</th><th>具体的な観測点</th><th>適した証拠</th></tr></thead><tbody><tr><td>プロトコル</td><td>予約と減算が一つの原子アクションか</td><td>TLA+の反例トレース</td></tr><tr><td>実装</td><td>同じキーの再送、辞書更新、エラー応答</td><td>PBTの操作列</td></tr><tr><td>計算</td><td>小計・割引・税の恒等式</td><td>Leanの定理とPBTの移植確認</td></tr></tbody></table></div>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>class Shop:
+    def __init__(self, stock: int):
+        self.stock = stock
+        self.orders: dict[str, str] = {}
+
+    def purchase(self, user: str) -&gt; bool:
+        if self.stock &lt;= 0 or user in self.orders:
+            return False
+        self.stock -= 1
+        self.orders[user] = "paid"
+        return True</code></pre></div>
+</div>
+<p>このPythonは単一スレッドの教育用です。`if`と減算の間に別リクエストが入れば、モデルの一アクションと実装のatomicityがずれます。実際のDBでは条件付き更新、トランザクション、冪等キーの一意制約を同時に検討します。</p>
+<div class="code-wrap" data-lang="lean">
+<div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import Mathlib
+
+def discount (amount rate : Nat) : Nat :=
+  amount * rate / 100
+
+theorem discount_le_amount (amount rate : Nat) (h : rate &lt;= 100) :
+    discount amount rate &lt;= amount := by
+  unfold discount
+  omega</code></pre></div>
+</div>
+<p>割引率の範囲はLeanで証明できる一方、決済サービスが二回呼ばれないことは別問題です。証明できる核と、実行順序を扱うモデルを無理に一つへ詰め込みません。</p>
+</section>
+<section id="choose">
+<h2 id="choose-heading">失敗モードから入口を選ぶ</h2>
+<div class="table-wrap"><table><thead><tr><th>失敗モード</th><th>最初の問い</th><th>入口</th><th>次に足すもの</th></tr></thead><tbody><tr><td>負の在庫・二重予約</td><td>同時操作の順序は何か</td><td>TLA+</td><td>PBTで実装再現</td></tr><tr><td>丸めが一円ずれる</td><td>値域と丸め規則は何か</td><td>Lean</td><td>PBTで移植・境界</td></tr><tr><td>未知のJSONで落ちる</td><td>入力スキーマと往復は何か</td><td>PBT</td><td>Leanで型の核</td></tr><tr><td>失効後に利用できる</td><td>状態遷移に戻り道があるか</td><td>TLA+</td><td>PBTで時計・キャッシュ</td></tr><tr><td>無限に待つ</td><td>公平性をどう仮定するか</td><td>TLA+ liveness</td><td>監視・タイムアウトテスト</td></tr></tbody></table></div>
+<p>迷ったら、道具の流行ではなく「最も高価な失敗を最小にできるか」で決めます。最初の成果物は、完成した巨大モデルではなく、チームが説明できる小さな反例です。</p>
+<aside class="callout tip" role="note"><strong>順序のある判断</strong><p>1. 破ると高価な性質を一つ選ぶ。2. 入力・状態の範囲を決める。3. 最小の証拠を作る。4. 反例を修正する。5. 失敗範囲を記録する。</p></aside>
+</section>
+<section id="workflow">
+<h2 id="workflow-heading">現実的な導入ワークフロー</h2>
+<ol>
+<li>障害や設計レビューから、保証したい文を日本語で書く。</li>
+<li>入力・ユーザー数・時計・外部依存の前提を明記する。</li>
+<li>PBTで実装境界の例と縮小反例を集める。</li>
+<li>競合・再試行・公平性がある部分だけをTLA+に縮約する。</li>
+<li>純粋な金額・権限・データ変換をLeanへ切り出す。</li>
+<li>CIで証拠を別ジョブにし、どの範囲を検査したか保存する.</li>
+</ol>
+<p>この順序は絶対ではありません。TLA+に慣れたチームならモデルから始めてもよいし、既存のLean資産があるなら定理から始めてもよいでしょう。重要なのは、ツール導入そのものを成功条件にしないことです。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">証拠の記録</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>tool: TLC
+model: Users = {"alice", "bob"}, InitialStock = 1
+property: stock &gt;= 0
+result: no counterexample
+implementation-gap: DB transaction and cache not modeled
+owner: checkout-team
+recorded-at: 2026-08-01</code></pre></div>
+</div>
+<p>記録には対象コミット、ツール版、モデル定数、PBTの例数、Leanのtoolchainも加えます。成功ログだけでなく、形式化しなかった部分を明示することが再現性の一部です。</p>
+</section>
+<section id="pitfalls">
+<h2 id="pitfalls-heading">よくある落とし穴を先に知る</h2>
+<aside class="callout danger" role="note"><strong>仕様を実装の写経にする</strong><p>本番コードをそのままTLA+へ翻訳すると、同じ条件分岐のバグを共有してしまいます。モデルは異なる抽象化で、何が原子で何が順序を持つかを表します。</p></aside>
+<aside class="callout warning" role="note"><strong>生成器がきれいすぎる</strong><p>常に正しいJSONしか作らないgeneratorは、未知フィールド、空文字、Unicode、最大長、重複キーを見ません。valid入力の性質とinvalid入力の拒否を分けて生成します。</p></aside>
+<aside class="callout info" role="note"><strong>証明の前提を隠す</strong><p>Leanで`rate &lt;= 100`を仮定したなら、そのvalidatorが実装入口で必ず通るかをPBT・型・契約で確認します。定理の前提はコメントではなく設計の境界です。</p></aside>
+<aside class="callout tip" role="note"><strong>反例を責任追及に使わない</strong><p>短い反例は、個人のミスを示すのではなく、状態の切り方・APIの契約・トランザクション境界を改善する設計資料です。</p></aside>
+</section>
+<section id="route">
+<h2 id="route-heading">読む順序のガイド</h2>
+<div class="table-wrap"><table><thead><tr><th>あなたの目的</th><th>読む順序</th><th>到達点</th></tr></thead><tbody><tr><td>全体像を知りたい</td><td>00 → 07</td><td>保証範囲を説明できる</td></tr><tr><td>Leanを使いたい</td><td>00 → 01 → 02 → 07</td><td>純粋関数の定理をCIに置ける</td></tr><tr><td>並行性を設計したい</td><td>00 → 03 → 04 → 07</td><td>反例トレースから実装契約を作れる</td></tr><tr><td>既存APIを揺さぶりたい</td><td>00 → 05 → 06 → 07</td><td>generatorと縮小例を運用できる</td></tr><tr><td>三つを比較したい</td><td>各基礎章を先に読み、07へ</td><td>同じ題材を層別に検証できる</td></tr></tbody></table></div>
+<p>一章を読み終えたら、コードを全部理解するより、性質を一文で言い直してください。その後、一行だけ壊して、どの証拠が失敗するかを確認すると学習が定着します。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">最初の練習ループ</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>要求を一文にする
+  -&gt; 対象と前提を分ける
+  -&gt; 最小コードを書く
+  -&gt; 正常系を確認する
+  -&gt; 一行壊す
+  -&gt; 反例を説明する
+  -&gt; 回帰テストと設計記録に残す</code></pre></div>
+</div>
+</section>
+<section id="quickstart">
+<h2 id="quickstart-heading">環境構築へのショートカット</h2>
+<p>環境を一度に全部揃える必要はありません。まず、手元の言語と課題に対応する章の最小プロジェクトだけを作ります。各ツールの版はリポジトリに固定し、教材のコードと実際のプロジェクトを混ぜないようにします。</p>
+<div class="table-wrap"><table><thead><tr><th>試したいこと</th><th>最初に開く章</th><th>最小の入口</th></tr></thead><tbody>
+<tr><td>型付きの定理</td><td><a href="01-lean-basics.html#install">01 Lean 基礎</a></td><td><code>lake new</code> と <code>lake env lean</code></td></tr>
+<tr><td>競合する状態遷移</td><td><a href="03-tlaplus-basics.html#tlc">03 TLA+ 基礎</a></td><td>TLCの最小モデル</td></tr>
+<tr><td>入力・操作列の探索</td><td><a href="05-pbt-basics.html#setup">05 PBT 基礎</a></td><td>Hypothesisまたはfast-check</td></tr>
+</tbody></table></div>
+<p>インストールができない環境でも、本文の性質を先にレビューできます。形式化の前提を文章にし、後から実行可能なコードへ移すことも正しい学び方です。</p>
+<aside class="callout info" role="note"><strong>ショートカットの使い分け</strong><p>純粋計算は01章、領域別のLean例は02章、状態遷移は03〜04章、実装を揺さぶる例は05〜06章、同じEC題材を一気通貫で読むなら07章へ進んでください。</p></aside>
+<ol>
+<li>章を一つ選び、最小コードをそのまま保存する。</li>
+<li>正常系を確認し、保証したい性質を一文に書き直す。</li>
+<li>意図的に一か所だけ壊し、どの証拠が赤くなるかを見る。</li>
+</ol>
+<p>この反復を一回できれば、ツールの機能を暗記するより先に、保証範囲と未保証の境界を会話できるようになります。チームで読むときは、反例を直す担当者も最初に決めてください。</p>
+<div class="meta-card">
+<strong>読むときの合言葉</strong>
+<span>何を対象にするか。</span>
+<span>どんな前提を置くか。</span>
+<span>何が破れないと嬉しいか。</span>
+<span>どの証拠がそれを支えるか。</span>
+</div>
+</section>
+<section id="summary">
+<h2 id="summary-heading">まとめ</h2>
+<p>Leanは形式化した関数や命題を全入力の形で固定し、TLA+は有限モデルの状態遷移を網羅し、PBTは実装を生成入力と操作列で揺さぶります。三つの成功は同じ意味ではありません。</p>
+<p>実務では、対象・前提・性質・証拠を記録し、形式化しない外部依存をテスト・監視・運用手順へ置きます。最も高価な失敗を最小化するところから始めれば、形式手法は大きな研究プロジェクトではなく、設計の解像度を上げる小さな道具になります。</p>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>形式手法</dt><dd>仕様や実装を数学的な対象として扱い、証明・モデル検査などで性質を確認する技術群。</dd><dt>不変条件</dt><dd>状態が遷移しても常に成立してほしい述語。Safetyの中心になる。</dd><dt>反例</dt><dd>性質を破る入力、状態、または状態列。修正の出発点になる。</dd><dt>原子性</dt><dd>途中状態を他の操作から観測・割り込みされない一つの操作単位。</dd><dt>オラクル</dt><dd>出力が正しいかを判定する、実装とは独立した基準。</dd><dt>refinement</dt><dd>抽象仕様の振る舞いを、具体的な実装が満たす対応づけ。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：Lean、TLA+、PBTの主な対象を一言ずつ説明してください。</summary><div class="answer">Leanは定義・命題、TLA+は状態遷移、PBTは実装の生成入力・操作列です。</div></details><details class="check-item"><summary>問2：TLCが通ったとき、必ず本番コードも安全だと言えないのはなぜですか。</summary><div class="answer">有限定数、抽象化、アクションの原子性など、モデルが落とした要素があるためです。</div></details><details class="check-item"><summary>問3：「保証」を記録するときの四つの項目は何ですか。</summary><div class="answer">対象、前提、性質、証拠です。</div></details><details class="check-item"><summary>問4：二重購入・丸め誤差・未知JSONの最初の入口をそれぞれ選んでください。</summary><div class="answer">順序ならTLA+、計算式ならLean、実装境界ならPBTが自然な入口です。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><span></span><a href="00-overview.html"><small>次の章 →</small><strong>00　3手法の地図</strong></a></nav>
+<a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
+</main>
+<script>
+
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var body = document.body;
+
+  function readTheme() {
+    try { return localStorage.getItem("formal-methods-theme"); }
+    catch (error) { return null; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem("formal-methods-theme", theme); }
+    catch (error) { return; }
+  }
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+    else root.removeAttribute("data-theme");
+    var toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+    var dark = theme === "dark" ||
+      (theme !== "light" && window.matchMedia &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    toggle.textContent = dark ? "☀ ライト" : "☾ ダーク";
+    toggle.setAttribute("aria-label", dark ? "ライトテーマに切り替える" : "ダークテーマに切り替える");
+    toggle.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+  var storedTheme = readTheme();
+  applyTheme(storedTheme);
+
+  var themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = current === "dark" || (!current && prefersDark) ? "light" : "dark";
+    saveTheme(next);
+    applyTheme(next);
+  });
+
+  var menuToggle = document.getElementById("menu-toggle");
+  var closeButton = document.getElementById("sidebar-close");
+  var backdrop = document.querySelector(".drawer-backdrop");
+  function closeDrawer() {
+    body.classList.remove("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+  function openDrawer() {
+    body.classList.add("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", function () {
+    body.classList.contains("drawer-open") ? closeDrawer() : openDrawer();
+  });
+  if (closeButton) closeButton.addEventListener("click", closeDrawer);
+  if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".chapter-link").forEach(function (link) {
+    if (link.getAttribute("data-page") === body.getAttribute("data-page")) {
+      link.classList.add("is-current");
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", closeDrawer);
+  });
+
+  var outline = document.getElementById("page-outline");
+  var headings = Array.prototype.slice.call(document.querySelectorAll("main h2[id], main h3[id]"));
+  if (outline) headings.forEach(function (heading) {
+    var link = document.createElement("a");
+    link.href = "#" + heading.id;
+    link.className = "outline-link level-" + heading.tagName.substring(1);
+    link.textContent = heading.textContent;
+    outline.appendChild(link);
+  });
+  function markOutline(id) {
+    if (!outline) return;
+    outline.querySelectorAll("a").forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
+    });
+  }
+  if ("IntersectionObserver" in window && headings.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) markOutline(entry.target.id);
+      });
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    headings.forEach(function (heading) { observer.observe(heading); });
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var languageSets = {
+    lean: {
+      keywords: "theorem lemma def example by fun match with inductive structure namespace where let in if then else type class instance deriving open import",
+      tactics: "intro exact apply constructor cases induction simp simpa rw rfl omega ring linarith norm_num decide aesop have show calc unfold split",
+    },
+    tla: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec TypeOK Invariant Safety Liveness TRUE FALSE UNCHANGED IF THEN ELSE LET IN DOMAIN SUBSET Cardinality Len Append Seq INSTANCE ASSUME THEOREM PROVE WF SF process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    pluscal: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    python: {
+      keywords: "and as assert async await break case class continue def del elif else except finally for from if import in is lambda match nonlocal not or pass raise return try while with yield True False None",
+      tactics: "",
+    },
+    typescript: {
+      keywords: "as async await break case catch class const debugger default delete do else export extends false finally for from function if implements import in instanceof interface let new null of package private protected public return static super switch this throw true try type typeof var void while with yield",
+      tactics: "",
+    },
+    haskell: {
+      keywords: "case class data default deriving do else if import in let module new of then type where forall",
+      tactics: "",
+    },
+    shell: {
+      keywords: "if then else fi for in do done case esac function export cd printf echo",
+      tactics: "",
+    }
+  };
+  function hasWord(set, token) {
+    return set && set.split(/\s+/).indexOf(token) !== -1;
+  }
+  function classifyToken(token, language) {
+    var set = languageSets[language] || languageSets.python;
+    if (token.charCodeAt(0) === 92 && token.charAt(1) === "*") return "hl-comment";
+    if (token.indexOf("--") === 0 || token.indexOf("#") === 0 || token.indexOf("//") === 0 || token.indexOf("/*") === 0 || token.indexOf("/-") === 0 || token.indexOf("(*") === 0 || token.indexOf("\\\\*") === 0) return "hl-comment";
+    if (/^(["'\x60])/.test(token)) return "hl-string";
+    if (/^\d/.test(token)) return "hl-number";
+    if (language === "python" && /^@/.test(token)) return "hl-decorator";
+    if (hasWord(set.tactics, token)) return "hl-function";
+    if (hasWord(set.keywords, token)) return "hl-keyword";
+    var operator = token === "<>" || token === "[]" || token === "~>" || token === "=>" || token === "->" || token === "<-" || token === ":=" || token === "===" || token === "!==" || token === "==" || token === "!=" || token === "<=" || token === ">=" || token === "&&" || token === "||" || token === "++" || token === "--" || token === "=" || token === "~" || token === "#" || token === "'" || token === "|" || token === ":" || token === "<" || token === ">" || token === "+" || token === "*" || token === "/" || token === "-" || token.indexOf("\\\\") !== -1;
+    if (token.charCodeAt(0) === 92 || token.charCodeAt(token.length - 1) === 92) return "hl-operator";
+    if (operator) return "hl-operator";
+    if (/^[A-Za-z_][A-Za-z0-9_']*$/.test(token) && /^[A-Z]/.test(token)) return "hl-function";
+    return "";
+  }
+  function highlight(source, language) {
+    var pattern = /(\\\*[^\n]*|--[^\n]*|#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/-[\s\S]*?-\*|\(\*[\s\S]*?\*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\x60(?:\\.|[^\x60\\])*\x60|\b\d+(?:\.\d+)?\b|@[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_']*|\/\\|\\\/|<>|\[\]|~>|=>|->|<-|:=|===|!==|==|!=|<=|>=|&&|\|\||\+\+|--|[=~#'|:<>+*\/-])/gm;
+    return source.replace(pattern, function (token) {
+      var kind = classifyToken(token, language);
+      return kind ? '<span class="' + kind + '">' + escapeHTML(token) + "</span>" : escapeHTML(token);
+    });
+  }
+  function decorateCode(wrapper) {
+    var code = wrapper.querySelector("code");
+    if (!code) return;
+    var raw = code.textContent.replace(/\n$/, "");
+    wrapper.setAttribute("data-raw", raw);
+    var highlighted = highlight(raw, wrapper.getAttribute("data-lang") || "python");
+    code.innerHTML = highlighted.split("\n").map(function (line, index) {
+      return '<span class="code-line"><span class="code-line-number" aria-hidden="true">' +
+        (index + 1) + '</span><span class="code-line-text">' + (line || " ") +
+        "</span></span>";
+    }).join("\n");
+  }
+  document.querySelectorAll(".code-wrap").forEach(decorateCode);
+
+  function fallbackCopy(raw, done) {
+    var area = document.createElement("textarea");
+    area.value = raw;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try { document.execCommand("copy"); done(); }
+    finally { document.body.removeChild(area); }
+  }
+  function copyCode(button) {
+    var wrapper = button.closest(".code-wrap");
+    var raw = wrapper ? wrapper.getAttribute("data-raw") : "";
+    if (!raw) return;
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "コピー済み";
+      button.setAttribute("aria-label", "コードをコピーしました");
+      window.setTimeout(function () {
+        button.textContent = old;
+        button.setAttribute("aria-label", "コードだけをコピー");
+      }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(raw).then(done).catch(function () { fallbackCopy(raw, done); });
+    } else {
+      fallbackCopy(raw, done);
+    }
+  }
+  document.querySelectorAll(".copy-button").forEach(function (button) {
+    button.addEventListener("click", function () { copyCode(button); });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeDrawer();
+  });
+})();
+
+</script>
+</body>
+</html>

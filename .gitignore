@@ -1,0 +1,5 @@
+# Obsidian の個人環境設定（ペイン配置・最近開いたファイル等が入る）
+.obsidian/
+
+# macOS
+.DS_Store

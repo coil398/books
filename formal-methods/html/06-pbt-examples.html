@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="形式手法とテスト技法を実務のコード例で学ぶ日本語HTML教科書">
+<title>PBT 実践サンプル | 形式手法とテスト技法</title>
+<style>
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --surface-2: #eef2ed;
+  --surface-3: #e4ebe4;
+  --ink: #25312d;
+  --muted: #5d6c65;
+  --faint: #7b8b83;
+  --line: #d3ddd5;
+  --accent: #236b5a;
+  --accent-strong: #174e42;
+  --accent-soft: #d9eee6;
+  --link: #155e9a;
+  --shadow: 0 15px 45px rgba(37, 55, 45, .10);
+  --code-bg: #202c2a;
+  --code-ink: #e8f2eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #e5f1fb;
+  --info-line: #347daf;
+  --warning-bg: #fff3d8;
+  --warning-line: #b27a17;
+  --danger-bg: #fde4e5;
+  --danger-line: #b54a50;
+  --tip-bg: #e6f4e8;
+  --tip-line: #3b8450;
+  --focus: #d67500;
+  --sidebar-width: 18rem;
+  --content-width: 72ch;
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  line-height: 1.8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #18211f;
+    --surface: #202b28;
+    --surface-2: #263632;
+    --surface-3: #30433d;
+    --ink: #e7eee9;
+    --muted: #b6c7bf;
+    --faint: #91a79c;
+    --line: #40544d;
+    --accent: #7ad0b2;
+    --accent-strong: #a1e5ca;
+    --accent-soft: #24473e;
+    --link: #8dcaff;
+    --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+    --code-bg: #101817;
+    --code-ink: #e5f1eb;
+    --code-keyword: #9bd6ff;
+    --code-string: #f2c987;
+    --code-comment: #91aa9d;
+    --code-number: #dfb2ff;
+    --code-operator: #ff9eaa;
+    --code-function: #b8e7c0;
+    --info-bg: #183449;
+    --info-line: #82bce7;
+    --warning-bg: #4a3819;
+    --warning-line: #efc767;
+    --danger-bg: #4d252a;
+    --danger-line: #ef9ca1;
+    --tip-bg: #1d3b29;
+    --tip-line: #91d19b;
+    --focus: #ffc36d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #18211f;
+  --surface: #202b28;
+  --surface-2: #263632;
+  --surface-3: #30433d;
+  --ink: #e7eee9;
+  --muted: #b6c7bf;
+  --faint: #91a79c;
+  --line: #40544d;
+  --accent: #7ad0b2;
+  --accent-strong: #a1e5ca;
+  --accent-soft: #24473e;
+  --link: #8dcaff;
+  --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+  --code-bg: #101817;
+  --code-ink: #e5f1eb;
+  --code-keyword: #9bd6ff;
+  --code-string: #f2c987;
+  --code-comment: #91aa9d;
+  --code-number: #dfb2ff;
+  --code-operator: #ff9eaa;
+  --code-function: #b8e7c0;
+  --info-bg: #183449;
+  --info-line: #82bce7;
+  --warning-bg: #4a3819;
+  --warning-line: #efc767;
+  --danger-bg: #4d252a;
+  --danger-line: #ef9ca1;
+  --tip-bg: #1d3b29;
+  --tip-line: #91d19b;
+  --focus: #ffc36d;
+}
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 2rem; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: var(--bg); color: var(--ink); }
+a { color: var(--link); text-underline-offset: .18em; }
+a:hover { color: var(--accent-strong); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.skip-link {
+  position: fixed; z-index: 50; top: .75rem; left: .75rem;
+  padding: .5rem .75rem; color: #fff; background: var(--accent-strong);
+  border-radius: .5rem; transform: translateY(-160%); transition: transform .2s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.menu-toggle {
+  display: none; position: fixed; z-index: 40; top: .9rem; left: .9rem;
+  width: 2.9rem; height: 2.9rem; border: 1px solid var(--line);
+  border-radius: .75rem; color: var(--ink); background: var(--surface);
+  box-shadow: var(--shadow); cursor: pointer;
+}
+.theme-toggle {
+  position: fixed; z-index: 35; top: 1rem; right: 1.25rem;
+  min-width: 6.7rem; padding: .45rem .7rem; border: 1px solid var(--line);
+  border-radius: 999px; color: var(--ink); background: var(--surface);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .08); cursor: pointer;
+}
+.sidebar {
+  position: fixed; z-index: 30; inset: 0 auto 0 0; display: flex;
+  width: var(--sidebar-width); flex-direction: column; padding: 1.25rem 1rem 1.5rem;
+  overflow-y: auto; border-right: 1px solid var(--line); background: var(--surface);
+}
+.brand { display: block; margin: .15rem .5rem 1.15rem; color: var(--ink); font-size: .93rem; font-weight: 800; line-height: 1.45; text-decoration: none; letter-spacing: .04em; }
+.brand small { display: block; margin-top: .3rem; color: var(--muted); font-size: .72rem; font-weight: 500; letter-spacing: 0; }
+.chapter-nav, .page-outline { display: grid; gap: .18rem; }
+.nav-label { margin: 1rem .5rem .35rem; color: var(--faint); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.chapter-link, .outline-link { display: block; border-left: 3px solid transparent; border-radius: 0 .45rem .45rem 0; color: var(--muted); text-decoration: none; }
+.chapter-link { padding: .46rem .55rem; font-size: .84rem; line-height: 1.4; }
+.outline-link { padding: .22rem .45rem; font-size: .76rem; line-height: 1.45; }
+.outline-link.level-3 { padding-left: 1.05rem; font-size: .72rem; }
+.chapter-link:hover, .outline-link:hover, .chapter-link.is-current, .outline-link.is-active { border-left-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+.sidebar-close { display: none; align-self: flex-end; border: 0; color: var(--muted); background: transparent; cursor: pointer; }
+.drawer-backdrop { display: none; }
+main {
+  width: min(var(--content-width), calc(100% - 2rem));
+  margin: 0 auto 0 calc(var(--sidebar-width) + max(2rem, (100vw - var(--sidebar-width) - var(--content-width)) / 2));
+  padding: 4.4rem 0 5rem;
+}
+.chapter-header { margin-bottom: 2.5rem; }
+.eyebrow { margin: 0 0 .65rem; color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+h1, h2, h3 { color: var(--ink); font-weight: 800; line-height: 1.35; text-wrap: balance; }
+h1 { max-width: 19ch; margin: 0 0 1.1rem; font-size: clamp(2rem, 5vw, 3.35rem); letter-spacing: -.035em; }
+h2 { margin: 3.3rem 0 1rem; padding-top: .25rem; border-top: 1px solid var(--line); font-size: clamp(1.45rem, 3vw, 2rem); }
+h3 { margin: 2rem 0 .65rem; font-size: 1.18rem; }
+p { margin: 0 0 1.1rem; }
+.lead { max-width: 66ch; margin-bottom: 1.5rem; color: var(--muted); font-size: 1.08rem; }
+.chapter-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.meta-card, .learning-box { padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface); box-shadow: 0 5px 22px rgba(0, 0, 0, .035); }
+.meta-card strong, .learning-box strong { display: block; margin-bottom: .3rem; color: var(--accent-strong); font-size: .78rem; letter-spacing: .06em; }
+.meta-card span { color: var(--muted); font-size: .88rem; }
+.learning-grid { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: .85rem; margin: 1.2rem 0 2.5rem; }
+.learning-box { margin: 0; }
+.learning-box h2 { margin: 0 0 .55rem; padding: 0; border: 0; font-size: 1rem; }
+.learning-box ul { margin: .4rem 0 0; padding-left: 1.25rem; }
+.learning-box li { margin: .25rem 0; color: var(--muted); font-size: .88rem; }
+.callout { margin: 1.35rem 0 1.6rem; padding: 1rem 1.1rem 1rem 1.25rem; border-left: 5px solid; border-radius: .2rem .8rem .8rem .2rem; background: var(--surface); }
+.callout strong { display: block; margin-bottom: .3rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.info { border-color: var(--info-line); background: var(--info-bg); }
+.callout.warning { border-color: var(--warning-line); background: var(--warning-bg); }
+.callout.danger { border-color: var(--danger-line); background: var(--danger-bg); }
+.callout.tip { border-color: var(--tip-line); background: var(--tip-bg); }
+.term { border-bottom: 2px dotted var(--accent); font-weight: 700; }
+.table-wrap { max-width: 100%; margin: 1.25rem 0 1.7rem; overflow-x: auto; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface); }
+table { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: .7rem .85rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { color: var(--accent-strong); background: var(--surface-2); font-weight: 800; }
+tr:last-child td { border-bottom: 0; }
+ul, ol { margin: .7rem 0 1.25rem; padding-left: 1.45rem; }
+li { margin: .38rem 0; }
+blockquote { margin: 1.4rem 0; padding: .75rem 1.1rem; border-left: 4px solid var(--accent); color: var(--muted); background: var(--surface-2); }
+.code-wrap { position: relative; max-width: 100%; margin: 1.35rem 0 1.75rem; overflow: hidden; border: 1px solid #3f5950; border-radius: .8rem; background: var(--code-bg); box-shadow: var(--shadow); }
+.code-toolbar { display: flex; min-height: 2.35rem; align-items: center; justify-content: space-between; padding: .35rem .55rem .35rem .85rem; border-bottom: 1px solid rgba(255, 255, 255, .13); color: #bcd2c6; background: rgba(255, 255, 255, .055); font-size: .75rem; }
+.code-language { font-weight: 800; letter-spacing: .08em; }
+.copy-button { padding: .25rem .55rem; border: 1px solid rgba(255, 255, 255, .3); border-radius: .45rem; color: #e8f4eb; background: transparent; cursor: pointer; }
+.copy-button:hover, .copy-button:focus-visible { background: rgba(255, 255, 255, .14); }
+.code-scroll { max-width: 100%; overflow-x: auto; }
+pre.code-block { margin: 0; min-width: max-content; padding: .9rem 0 1rem; color: var(--code-ink); font: .86rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; tab-size: 2; }
+pre code { display: block; }
+.code-line { display: flex; min-height: 1.65em; padding-right: 1rem; }
+.code-line-number { flex: 0 0 3.25rem; padding-right: .8rem; color: #6e8a7e; text-align: right; user-select: none; }
+.code-line-text { display: block; padding-left: .2rem; white-space: pre; }
+.hl-keyword { color: var(--code-keyword); font-weight: 700; }
+.hl-string { color: var(--code-string); }
+.hl-comment { color: var(--code-comment); font-style: italic; }
+.hl-number { color: var(--code-number); }
+.hl-operator { color: var(--code-operator); }
+.hl-function { color: var(--code-function); }
+.hl-decorator { color: #f0a9dc; }
+.glossary { margin-top: 3.5rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: .85rem; background: var(--surface-2); }
+.glossary h2 { margin-top: 0; border: 0; }
+.glossary dl { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: .65rem 1rem; margin: 0; }
+.glossary dt { color: var(--accent-strong); font-weight: 800; }
+.glossary dd { margin: 0; color: var(--muted); }
+.checks { margin-top: 3rem; }
+.checks h2 { margin-bottom: .8rem; }
+.check-item { margin: .7rem 0; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); }
+.check-item summary { cursor: pointer; font-weight: 700; }
+.answer { margin: .65rem 0 0; padding: .7rem .9rem; color: var(--muted); background: var(--surface-2); }
+.chapter-nav-bottom { display: flex; gap: 1rem; justify-content: space-between; margin-top: 4rem; padding-top: 1.3rem; border-top: 2px solid var(--line); }
+.chapter-nav-bottom a { display: block; max-width: 48%; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface); text-decoration: none; }
+.chapter-nav-bottom a:last-child { margin-left: auto; text-align: right; }
+.chapter-nav-bottom small { display: block; margin-bottom: .2rem; color: var(--muted); }
+.chapter-nav-bottom strong { color: var(--accent-strong); }
+.page-top { display: inline-block; margin-top: 2.2rem; font-size: .85rem; }
+@media (max-width: 1100px) { :root { --sidebar-width: 16rem; } main { margin-left: calc(var(--sidebar-width) + 1.6rem); } }
+@media (max-width: 900px) {
+  .menu-toggle { display: block; }
+  .sidebar { width: min(19rem, 88vw); transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow); }
+  body.drawer-open .sidebar { transform: translateX(0); }
+  .sidebar-close { display: block; font-size: 1.5rem; }
+  .drawer-backdrop { position: fixed; z-index: 25; inset: 0; background: rgba(0, 0, 0, .45); }
+  body.drawer-open .drawer-backdrop { display: block; }
+  main { width: min(var(--content-width), calc(100% - 2rem)); margin: 0 auto; padding-top: 5.1rem; }
+  .theme-toggle { top: .9rem; right: .8rem; }
+}
+@media (max-width: 650px) {
+  .chapter-meta, .learning-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2.1rem; }
+  .glossary dl { display: block; }
+  .glossary dt { margin-top: .9rem; }
+  .glossary dd { margin-top: .15rem; }
+  .chapter-nav-bottom { display: grid; }
+  .chapter-nav-bottom a { max-width: none; }
+  .chapter-nav-bottom a:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --surface-2: #f3f3f3; --ink: #111; --muted: #333; --line: #bbb; --code-bg: #f5f5f5; --code-ink: #111; }
+  .sidebar, .menu-toggle, .theme-toggle, .drawer-backdrop, .copy-button, .page-top { display: none !important; }
+  main { width: 100%; margin: 0; padding: 0; }
+  .chapter-header { padding-top: 0; }
+  .code-wrap { border: 1px solid #777; box-shadow: none; break-inside: avoid; }
+  pre.code-block { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+  .code-line { display: block; }
+  .code-line-number { display: none; }
+  .code-line-text { white-space: pre-wrap; }
+  a { color: #111; }
+  .chapter-nav-bottom { display: none; }
+}
+
+</style>
+</head>
+<body data-page="06-pbt-examples">
+<a class="skip-link" href="#main-content">本文へスキップ</a>
+<button id="menu-toggle" class="menu-toggle" type="button" aria-label="章目次を開く" aria-expanded="false" aria-controls="sidebar">☰</button>
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="ダークテーマに切り替える" aria-pressed="false">☾ ダーク</button>
+<aside id="sidebar" class="sidebar" aria-label="章目次">
+<button id="sidebar-close" class="sidebar-close" type="button" aria-label="章目次を閉じる">×</button>
+<a class="brand" href="index.html">形式手法とテスト技法<small>Lean 4 / TLA+ / PBT 実務教科書</small></a>
+<div class="nav-label">CHAPTERS</div>
+<nav class="chapter-nav" aria-label="全章">
+<a class="chapter-link" data-page="index" href="index.html">表紙・読み方</a>
+<a class="chapter-link" data-page="00-overview" href="00-overview.html">00　3手法の地図</a>
+<a class="chapter-link" data-page="01-lean-basics" href="01-lean-basics.html">01　Lean 4 基礎</a>
+<a class="chapter-link" data-page="02-lean-examples" href="02-lean-examples.html">02　Lean 実践サンプル</a>
+<a class="chapter-link" data-page="03-tlaplus-basics" href="03-tlaplus-basics.html">03　TLA+ 基礎</a>
+<a class="chapter-link" data-page="04-tlaplus-examples" href="04-tlaplus-examples.html">04　TLA+ 実践サンプル</a>
+<a class="chapter-link" data-page="05-pbt-basics" href="05-pbt-basics.html">05　PBT 基礎</a>
+<a class="chapter-link" data-page="06-pbt-examples" href="06-pbt-examples.html">06　PBT 実践サンプル</a>
+<a class="chapter-link" data-page="07-combining" href="07-combining.html">07　3手法を組み合わせる</a>
+</nav>
+<div class="nav-label">ON THIS PAGE</div>
+<nav id="page-outline" class="page-outline" aria-label="このページの見出し"></nav>
+</aside>
+<div class="drawer-backdrop" aria-hidden="true"></div>
+<main id="main-content">
+<header class="chapter-header"><p class="eyebrow">Chapter 06 · 形式手法とテスト技法</p><h1>PBT 実践サンプル</h1><p>Web・数学・物理学・ゲームの実装を、往復性・モデル比較・誤差境界・状態機械で揺さぶります。</p><div class="chapter-meta"><div class="meta-card"><strong>対象</strong><span>05章でgeneratorとshrinkを読んだ人</span></div><div class="meta-card"><strong>成果物</strong><span>領域固有のpropertyと境界値を設計できる</span></div><div class="meta-card"><strong>読む目安</strong><span>80〜110分</span></div></div></header><section class="learning-grid" aria-label="章の案内"><div class="learning-box"><h2>この章で学ぶこと</h2><ul>
+<li>Webの入力・認可・時計を検査する</li>
+<li>数値と物理の誤差契約を書く</li>
+<li>ゲームの状態・seed・バランスを検査する</li>
+</ul></div><div class="learning-box"><h2>前提知識</h2><ul>
+<li>Hypothesisまたはfast-check</li>
+<li>generator・shrink・stateful test</li>
+<li>fake依存の注入</li>
+</ul></div><div class="learning-box"><h2>所要時間の目安</h2><p>四領域から最低二例ずつ読み、失敗運用の記録を作ります。</p></div></section><section id="run">
+<h2 id="run-heading">実例を動かす</h2>
+<p>この章では、Web・数学・物理学・ゲームの実装に対して<dfn>Property-Based Testing（PBT）</dfn>を適用します。外部依存は純粋関数・fake・注入可能な時計へ置き換え、何を観測しているかを明示します。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>python -m venv .venv
+. .venv/bin/activate
+python -m pip install hypothesis pytest
+pytest -q</code></pre></div>
+</div>
+<p>各例は、保証したいこと・なぜ必要か・破れたときの影響をコードの前に置きます。<dfn>shrink</dfn>で得た小さな反例、許容誤差、無効入力、旧スキーマ、seed再現性は「テスト実装の細部」ではなく契約です。</p>
+<aside class="callout info" role="note"><strong>入力範囲を隠さない</strong><p>NaNを除外したなら、NaNを扱わない仕様だと記録します。generatorのmin/max、許容誤差、操作列の長さをCIログとテスト名に残します。</p></aside>
+</section>
+<section id="web-roundtrip">
+<h2 id="web-roundtrip-heading">Web例1：注文シリアライズの往復</h2>
+<p>保証したいのは、許容された注文をJSONにして戻すと同じ意味になることです。破れると、再読込で金額、ID、ゼロ値、Unicodeが変わります。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import json
+from dataclasses import asdict, dataclass
+
+from hypothesis import given, strategies as st
+
+
+@dataclass(frozen=True)
+class Order:
+    id: str
+    cents: int
+
+
+def encode(order: Order) -&gt; str:
+    return json.dumps(
+        asdict(order),
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+
+def decode(blob: str) -&gt; Order:
+    value = json.loads(blob)
+    return Order(id=value["id"], cents=value["cents"])
+
+
+orders = st.builds(
+    Order,
+    id=st.text(min_size=1, max_size=20),
+    cents=st.integers(min_value=0, max_value=10**8),
+)
+
+
+@given(orders)
+def test_order_round_trip(order: Order):
+    assert decode(encode(order)) == order</code></pre></div>
+</div>
+<p>ジェネレータは非空IDと非負centsを作ります。未知フィールドを拒否する、欠落フィールドをエラーにする、旧バージョンを読めるといった性質は別の入力戦略へ分けます。</p>
+<aside class="callout danger" role="note"><strong>JSONの往復は外部意味の全てではない</strong><p>日付・Decimal・タイムゾーン・大きな整数・浮動小数には別の表現契約が必要です。Pythonの辞書が等しいだけで、APIのHTTPステータスやDBの型まで保証したことにはなりません。</p></aside>
+</section>
+<section id="web-validation">
+<h2 id="web-validation-heading">Web例2：APIバリデーションの境界</h2>
+<p>limitが1〜100だけ受け入れられることを固定します。上限・下限を明示しないと、ページングが重いクエリや空ページを返します。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+def valid_limit(value: int) -&gt; bool:
+    return 1 &lt;= value &lt;= 100
+
+
+@given(st.integers())
+def test_limit_validator_is_exact(value: int):
+    assert valid_limit(value) == (1 &lt;= value &lt;= 100)
+
+
+@given(st.integers(min_value=1, max_value=100))
+def test_valid_limit_never_rejected(value: int):
+    assert valid_limit(value)
+
+
+@given(st.one_of(
+    st.integers(max_value=0),
+    st.integers(min_value=101),
+))
+def test_invalid_limit_is_rejected(value: int):
+    assert not valid_limit(value)</code></pre></div>
+</div>
+<p>この性質はvalidatorの論理をそのまま再記述しているため、単純な誤りを見つけにくい面もあります。HTTP層・GraphQL resolver・CLIから同じvalidatorが呼ばれることを、観測可能なfakeと統合テストで確認します。</p>
+<h3 id="web-auth-model">Web例3：認可表と独立モデル</h3>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / model comparison</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+roles = st.sampled_from(["guest", "member", "admin"])
+actions = st.sampled_from(["read", "write", "delete"])
+
+
+def model(role: str, action: str) -&gt; bool:
+    return (
+        role == "admin"
+        or (role == "member" and action in {"read", "write"})
+        or (role == "guest" and action == "read")
+    )
+
+
+def production(role: str, action: str) -&gt; bool:
+    table = {
+        ("guest", "read"): True,
+        ("member", "read"): True,
+        ("member", "write"): True,
+    }
+    return role == "admin" or table.get((role, action), False)
+
+
+@given(roles, actions)
+def test_authorization_matches_model(role: str, action: str):
+    assert production(role, action) == model(role, action)</code></pre></div>
+</div>
+<aside class="callout warning" role="note"><strong>モデルを同じ辞書から作らない</strong><p>実装とモデルを同じ定数から生成すると、表の誤りを共有します。仕様レビューで独立に決めた小さなモデルを用意し、全組合せを生成します。</p></aside>
+</section>
+<section id="web-rate">
+<h2 id="web-rate-heading">Web例4：レート制限とfake clock</h2>
+<p>時間を進める操作を生成し、直近60秒の受付数が3件以下であることを検査します。破れると、時計の境界で古い呼び出しが残り、正当なリクエストを拒否したり制限を抜けたりします。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / state machine</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import strategies as st
+from hypothesis.stateful import (
+    RuleBasedStateMachine,
+    invariant,
+    rule,
+)
+
+
+class RateLimitMachine(RuleBasedStateMachine):
+    def __init__(self):
+        super().__init__()
+        self.now = 0
+        self.calls: list[int] = []
+
+    @rule(delta=st.integers(min_value=0, max_value=10))
+    def advance(self, delta: int):
+        self.now += delta
+        self.calls = [
+            timestamp
+            for timestamp in self.calls
+            if timestamp &gt; self.now - 60
+        ]
+
+    @rule()
+    def request(self):
+        accepted = len(self.calls) &lt; 3
+        if accepted:
+            self.calls.append(self.now)
+        assert len(self.calls) &lt;= 3
+
+    @invariant()
+    def bounded(self):
+        assert len(self.calls) &lt;= 3
+
+
+TestRateLimit = RateLimitMachine.TestCase</code></pre></div>
+</div>
+<p>このモデルは「受け付けた呼び出し時刻」の集合だけを見ています。本番の分散カウンタ、複数リージョン、時計の後退、永続化失敗は別のfakeやTLA+モデルへ追加します。</p>
+</section>
+<section id="math-integers">
+<h2 id="math-integers-heading">数学例1：整数の代数性質</h2>
+<p>整数加法の可換性・結合性をpropertyにします。これらは集計・差分適用・分割処理のリファクタリングで、順序や括弧を変えてよいことを確認する基礎です。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+@given(st.integers(min_value=-10**6, max_value=10**6),
+       st.integers(min_value=-10**6, max_value=10**6))
+def test_add_commutative(a: int, b: int):
+    assert a + b == b + a
+
+
+@given(st.integers(), st.integers(), st.integers())
+def test_add_associative(a: int, b: int, c: int):
+    assert (a + b) + c == a + (b + c)</code></pre></div>
+</div>
+<p>整数の性質をそのまま浮動小数へ移すと失敗します。固定小数やDecimalなら、桁数・丸めモードを契約にしたpropertyが必要です。</p>
+<h3 id="math-float">数学例2：浮動小数の誤差境界</h3>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+finite = st.floats(
+    allow_nan=False,
+    allow_infinity=False,
+    width=64,
+)
+
+
+@given(finite)
+def test_float_identity_has_documented_tolerance(x: float):
+    error = abs((x + 1.0) - x - 1.0)
+    assert error &lt;= 2.0**-40 or abs(x) &gt; 2.0**40</code></pre></div>
+</div>
+<p>完全一致ではなく、適用範囲と許容誤差を仕様にします。大きすぎる値を別ケースに分けるなど、なぜその境界を置いたかを説明します。</p>
+</section>
+<section id="math-sort">
+<h2 id="math-sort-heading">数学例3：ソートと多重集合</h2>
+<p>sortの結果をそのまま期待せず、冪等性と長さ保存を分けて検査します。重複数まで保存したいなら集合ではなく多重集合、またはソート済みリストを比較します。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+@given(st.lists(st.integers()))
+def test_sorted_is_idempotent_and_length_preserving(xs: list[int]):
+    result = sorted(xs)
+    assert sorted(result) == result
+    assert len(result) == len(xs)
+
+
+@given(st.sets(st.integers()), st.sets(st.integers()))
+def test_union_commutative(a: set[int], b: set[int]):
+    assert a | b == b | a</code></pre></div>
+</div>
+<h3 id="math-decimal">数学例4：Decimalとの比較</h3>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Decimal</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from decimal import Decimal, localcontext
+
+from hypothesis import given, strategies as st
+
+
+@given(st.integers(-100_000, 100_000),
+       st.integers(-100_000, 100_000))
+def test_decimal_add_exact(a: int, b: int):
+    with localcontext() as context:
+        context.prec = 40
+        assert Decimal(a) + Decimal(b) == Decimal(a + b)</code></pre></div>
+</div>
+<p>別実装をオラクルにする場合、どの丸め規則が違うかを明記します。Decimalを使ったから金融計算が自動的に正しいわけではなく、税・通貨・端数処理の規則をpropertyへ追加します。</p>
+</section>
+<section id="physics-integrator">
+<h2 id="physics-integrator-heading">物理例1：積分器の一ステップ誤差</h2>
+<p>単純な調和振動子の一ステップで、エネルギー誤差が小さい範囲に収まることを検査します。これは長時間保存の証明ではなく、dtをどの範囲で使えるかを決めるpropertyです。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+def step(x: float, v: float, dt: float) -&gt; tuple[float, float]:
+    return x + v * dt, v - x * dt
+
+
+def energy(x: float, v: float) -&gt; float:
+    return (x * x + v * v) / 2
+
+
+finite_small = st.floats(
+    min_value=-1,
+    max_value=1,
+    allow_nan=False,
+    allow_infinity=False,
+)
+
+
+@given(finite_small, finite_small,
+       st.floats(min_value=0, max_value=0.01,
+                 allow_nan=False, allow_infinity=False))
+def test_energy_error_is_bounded(x: float, v: float, dt: float):
+    x2, v2 = step(x, v, dt)
+    assert abs(energy(x2, v2) - energy(x, v)) &lt; 0.02</code></pre></div>
+</div>
+<p>dtを大きくすると反例が出ることがあります。反例は積分器の適用範囲を決める資料であり、テストを弱めて消す理由ではありません。</p>
+</section>
+<section id="physics-collision">
+<h2 id="physics-collision-heading">物理例2：衝突判定の対称性</h2>
+<p>二つの円の衝突判定は、引数の順番を入れ替えても同じであるべきです。片側だけへ補正を混ぜると対称性が破れ、ゲーム物理の再現性が崩れます。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+def collide(a: tuple[float, float, float],
+            b: tuple[float, float, float]) -&gt; bool:
+    ax, ay, ar = a
+    bx, by, br = b
+    distance_squared = (ax - bx)**2 + (ay - by)**2
+    return distance_squared &lt;= (ar + br)**2
+
+
+points = st.tuples(
+    st.floats(-100, 100, allow_nan=False, allow_infinity=False),
+    st.floats(-100, 100, allow_nan=False, allow_infinity=False),
+    st.floats(0, 10, allow_nan=False, allow_infinity=False),
+)
+
+
+@given(points, points)
+def test_collision_symmetric(a, b):
+    assert collide(a, b) == collide(b, a)</code></pre></div>
+</div>
+<p>NaNや極端な半径を除外したなら、ゲームエンジンがそれらを受け付けない契約として残します。受け付けるなら、NaNの意味を別のpropertyにします。</p>
+</section>
+<section id="physics-units">
+<h2 id="physics-units-heading">物理例3：単位変換の往復</h2>
+<p>メートルとセンチメートルの変換を浮動小数で往復します。整数なら完全一致を要求できますが、浮動小数では相対誤差と絶対誤差の両方を契約にします。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+def meters_to_cm(value: float) -&gt; float:
+    return value * 100
+
+
+def cm_to_meters(value: float) -&gt; float:
+    return value / 100
+
+
+@given(st.floats(-1e6, 1e6,
+                 allow_nan=False, allow_infinity=False))
+def test_unit_round_trip(value: float):
+    restored = cm_to_meters(meters_to_cm(value))
+    tolerance = max(1e-9, abs(value) * 1e-12)
+    assert abs(restored - value) &lt;= tolerance</code></pre></div>
+</div>
+<p>単位変換のpropertyが通っても、秒とメートルを混ぜないことは保証しません。単位を型で分ける、入力の単位を固定する、API名に単位を含めるなど、別の設計も必要です。</p>
+</section>
+<section id="game-inventory">
+<h2 id="game-inventory-heading">ゲーム例1：インベントリ状態機械</h2>
+<p>addとremoveを操作列で生成し、実装の在庫が簡単なモデルと一致すること、負数にならないことを保証します。破れるとゲーム内通貨やアイテムの複製・不正購入につながります。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / state machine</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import strategies as st
+from hypothesis.stateful import (
+    RuleBasedStateMachine,
+    invariant,
+    rule,
+)
+
+
+class InventoryMachine(RuleBasedStateMachine):
+    def __init__(self):
+        super().__init__()
+        self.model: dict[int, int] = {}
+        self.actual: dict[int, int] = {}
+
+    @rule(item=st.integers(0, 5),
+          amount=st.integers(0, 3))
+    def add(self, item: int, amount: int):
+        self.model[item] = self.model.get(item, 0) + amount
+        self.actual[item] = self.actual.get(item, 0) + amount
+
+    @rule(item=st.integers(0, 5),
+          amount=st.integers(0, 3))
+    def remove(self, item: int, amount: int):
+        old = self.model.get(item, 0)
+        taken = min(old, amount)
+        self.model[item] = old - taken
+        current = self.actual.get(item, 0)
+        self.actual[item] = max(0, current - amount)
+
+    @invariant()
+    def agrees(self):
+        assert self.actual == self.model
+
+
+TestInventory = InventoryMachine.TestCase</code></pre></div>
+</div>
+<p>モデルがremoveのunderflow規則をどう決めたかが重要です。エラーを返す仕様なら、成功・拒否・状態不変を別に観測します。</p>
+</section>
+<section id="game-seed">
+<h2 id="game-seed-heading">ゲーム例2：乱数seedの再現性</h2>
+<p>同じseedと回数なら、独立した乱数生成器が同じ結果を返すことを保証します。グローバルRNGを使うとテストの実行順に依存し、リプレイや不具合調査が不安定になります。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import random
+
+from hypothesis import given, strategies as st
+
+
+def roll(seed: int, count: int) -&gt; list[int]:
+    rng = random.Random(seed)
+    return [rng.randrange(6) + 1 for _ in range(count)]
+
+
+@given(st.integers(), st.integers(min_value=0, max_value=100))
+def test_seed_replays(seed: int, count: int):
+    assert roll(seed, count) == roll(seed, count)</code></pre></div>
+</div>
+<p>同じseedでもゲームルールの版、乱数アルゴリズム、保存形式が変われば再現性が崩れます。seedだけでなく、ルール版と入力を保存します。</p>
+</section>
+<section id="game-save">
+<h2 id="game-save-heading">ゲーム例3：セーブ・ロード往復</h2>
+<p>セーブデータをJSON化して戻すと同じ意味になることを検査します。破れると、レベル、コイン、アイテムが消えたり、旧バージョンのセーブを読めなくなったりします。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>import json
+
+from hypothesis import given, strategies as st
+
+
+states = st.fixed_dictionaries({
+    "level": st.integers(0, 100),
+    "coins": st.integers(0, 10**6),
+    "items": st.lists(
+        st.text(min_size=1, max_size=8),
+        max_size=10,
+    ),
+})
+
+
+def save(state: dict) -&gt; str:
+    return json.dumps(state, sort_keys=True)
+
+
+def load(blob: str) -&gt; dict:
+    return json.loads(blob)
+
+
+@given(states)
+def test_save_load(state: dict):
+    assert load(save(state)) == state</code></pre></div>
+</div>
+<p>スキーマ移行を含む場合、旧形式を別generatorで作り、現在のモデルへの変換と保存を分けて検査します。</p>
+</section>
+<section id="game-balance">
+<h2 id="game-balance-heading">ゲーム例4：ダメージの単調性</h2>
+<p>powerを増やしたらダメージが下がらず、armorを増やしたらダメージが増えないことを保証します。破れると、強い装備が弱い装備より不利になるバランス退行が起きます。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+def damage(power: int, armor: int) -&gt; int:
+    return max(0, power - armor)
+
+
+@given(st.integers(0, 1000),
+       st.integers(0, 1000),
+       st.integers(0, 1000))
+def test_damage_monotone_power(p: int, q: int, armor: int):
+    if p &lt;= q:
+        assert damage(p, armor) &lt;= damage(q, armor)
+
+
+@given(st.integers(0, 1000),
+       st.integers(0, 1000),
+       st.integers(0, 1000))
+def test_damage_antitone_armor(power: int, a: int, b: int):
+    if a &lt;= b:
+        assert damage(power, b) &lt;= damage(power, a)</code></pre></div>
+</div>
+<p>数値の単調性だけでは、クリティカル・属性・丸め・上限を扱えません。ルール変更で性質が変わったときは、テストを削除するのではなく、新しい契約を命名します。</p>
+</section>
+<section id="fake">
+<h2 id="fake-heading">外部依存をfakeで観測する</h2>
+<p>決済を毎回本当に呼ぶ代わりに、呼び出し回数と引数を観測します。PBTが本番の資格情報やネットワークに依存せず、リトライや失敗を再現できるようになります。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / fake dependency</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+
+
+class FakePayment:
+    def __init__(self):
+        self.calls: list[tuple[str, int]] = []
+
+    def charge(self, key: str, cents: int) -&gt; bool:
+        self.calls.append((key, cents))
+        return key != "fail"
+
+
+@given(
+    st.text(min_size=1, max_size=10),
+    st.integers(min_value=0, max_value=10_000),
+)
+def test_payment_arguments_are_observable(key: str, cents: int):
+    fake = FakePayment()
+    fake.charge(key, cents)
+    assert fake.calls == [(key, cents)]</code></pre></div>
+</div>
+<p>失敗を生成するなら、`key == "fail"`のような特殊値だけに依存せず、成功・失敗・タイムアウト・重複応答を表す結果型を作ります。何を再現したfakeかを記録します。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / known regression</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>def test_known_replay_is_stable():
+    assert roll(42, 4) == roll(42, 4)</code></pre></div>
+</div>
+<aside class="callout tip" role="note"><strong>反例から固定例へ</strong><p>PBTが見つけた入力は、短い回帰テストとして固定します。seedだけを残すのではなく、縮小後の入力、ルール版、性質名を保存します。</p></aside>
+</section>
+<section id="matrix">
+<h2 id="matrix-heading">領域ごとの境界値</h2>
+<div class="table-wrap"><table><thead><tr><th>領域</th><th>最小</th><th>通常</th><th>最大</th><th>不正・特殊</th></tr></thead><tbody><tr><td>ページサイズ</td><td>0・1</td><td>20</td><td>100</td><td>-1・文字列</td></tr><tr><td>ダメージ</td><td>0</td><td>50</td><td>1000</td><td>NaN・負数</td></tr><tr><td>在庫</td><td>0</td><td>10</td><td>上限</td><td>負数・重複キー</td></tr><tr><td>セッション年齢</td><td>0</td><td>TTL内</td><td>TTL</td><td>TTL超過・時計後退</td></tr><tr><td>セーブデータ</td><td>空配列</td><td>通常項目</td><td>長大</td><td>欠落・未知schema</td></tr></tbody></table></div>
+<p>境界表はgenerator、APIエラー、監視メトリクスの共通語彙になります。入力範囲を広げるPRでは、どの行を更新したかをレビューします。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">失敗運用の流れ</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>PBTの反例
+  -&gt; shrink後の入力を保存
+  -&gt; 原因を一文で説明
+  -&gt; 回帰テストに固定
+  -&gt; 一般化できるpropertyを残す
+  -&gt; 必要ならTLA+モデルやLean定理へ反映</code></pre></div>
+</div>
+</section>
+<section id="summary">
+<h2 id="summary-heading">まとめ</h2>
+<p>Webでは往復・認可・バリデーション・時計、数学では代数・ソート・丸め、物理では誤差・対称性・単位、ゲームでは状態機械・seed・保存・単調性を検査しました。</p>
+<p>領域ごとにgeneratorを狭く設計し、外部依存はfakeで観測し、許容誤差と特殊値を契約にします。次章では、TLA+の設計反例、Leanの計算核、PBTの実装を一つの購入フローで結びます。</p>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>往復性</dt><dd>encodeしてdecodeするなど、変換の前後で意味が戻る性質。</dd><dt>許容誤差</dt><dd>浮動小数や近似計算で許される差の上限。</dd><dt>fake clock</dt><dd>テストから時間を進められる、注入可能な時計。</dd><dt>モデル比較</dt><dd>簡単な独立モデルと実装の状態・結果を比べる方法。</dd><dt>回帰fixture</dt><dd>過去の失敗入力を固定した再現用のテストデータ。</dd><dt>境界値</dt><dd>最小・最大・空・閾値直前後など、契約が変わる入力。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：JSON往復propertyで、generatorが非負centsだけを作ると何が未検査ですか。</summary><div class="answer">負数が合法か、最大値、未知フィールド、Decimalや日付などの契約です。</div></details><details class="check-item"><summary>問2：物理の一ステップ誤差の反例を消してはいけない理由は何ですか。</summary><div class="answer">積分器の適用範囲やdtの上限を示す設計資料になるためです。</div></details><details class="check-item"><summary>問3：ゲームのseedだけを保存するのが不十分な理由は何ですか。</summary><div class="answer">ルール版・乱数実装・入力が変わると同じseedでも結果が変わるためです。</div></details><details class="check-item"><summary>問4：fake依存で観測すべきものは何ですか。</summary><div class="answer">呼び出し回数、引数、成功・失敗・タイムアウトなど、契約に必要な観測点です。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="05-pbt-basics.html"><small>← 前の章</small><strong>05　PBT 基礎</strong></a><a href="07-combining.html"><small>次の章 →</small><strong>07　3手法を組み合わせる</strong></a></nav>
+<a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
+</main>
+<script>
+
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var body = document.body;
+
+  function readTheme() {
+    try { return localStorage.getItem("formal-methods-theme"); }
+    catch (error) { return null; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem("formal-methods-theme", theme); }
+    catch (error) { return; }
+  }
+  function applyTheme(theme) {
+    if (theme === "light" || theme === "dark") root.setAttribute("data-theme", theme);
+    else root.removeAttribute("data-theme");
+    var toggle = document.getElementById("theme-toggle");
+    if (!toggle) return;
+    var dark = theme === "dark" ||
+      (theme !== "light" && window.matchMedia &&
+       window.matchMedia("(prefers-color-scheme: dark)").matches);
+    toggle.textContent = dark ? "☀ ライト" : "☾ ダーク";
+    toggle.setAttribute("aria-label", dark ? "ライトテーマに切り替える" : "ダークテーマに切り替える");
+    toggle.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+  var storedTheme = readTheme();
+  applyTheme(storedTheme);
+
+  var themeToggle = document.getElementById("theme-toggle");
+  if (themeToggle) themeToggle.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    var prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = current === "dark" || (!current && prefersDark) ? "light" : "dark";
+    saveTheme(next);
+    applyTheme(next);
+  });
+
+  var menuToggle = document.getElementById("menu-toggle");
+  var closeButton = document.getElementById("sidebar-close");
+  var backdrop = document.querySelector(".drawer-backdrop");
+  function closeDrawer() {
+    body.classList.remove("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+  }
+  function openDrawer() {
+    body.classList.add("drawer-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "true");
+  }
+  if (menuToggle) menuToggle.addEventListener("click", function () {
+    body.classList.contains("drawer-open") ? closeDrawer() : openDrawer();
+  });
+  if (closeButton) closeButton.addEventListener("click", closeDrawer);
+  if (backdrop) backdrop.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".chapter-link").forEach(function (link) {
+    if (link.getAttribute("data-page") === body.getAttribute("data-page")) {
+      link.classList.add("is-current");
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", closeDrawer);
+  });
+
+  var outline = document.getElementById("page-outline");
+  var headings = Array.prototype.slice.call(document.querySelectorAll("main h2[id], main h3[id]"));
+  if (outline) headings.forEach(function (heading) {
+    var link = document.createElement("a");
+    link.href = "#" + heading.id;
+    link.className = "outline-link level-" + heading.tagName.substring(1);
+    link.textContent = heading.textContent;
+    outline.appendChild(link);
+  });
+  function markOutline(id) {
+    if (!outline) return;
+    outline.querySelectorAll("a").forEach(function (link) {
+      link.classList.toggle("is-active", link.getAttribute("href") === "#" + id);
+    });
+  }
+  if ("IntersectionObserver" in window && headings.length) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) markOutline(entry.target.id);
+      });
+    }, { rootMargin: "-12% 0px -72% 0px", threshold: 0 });
+    headings.forEach(function (heading) { observer.observe(heading); });
+  }
+
+  function escapeHTML(value) {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var languageSets = {
+    lean: {
+      keywords: "theorem lemma def example by fun match with inductive structure namespace where let in if then else type class instance deriving open import",
+      tactics: "intro exact apply constructor cases induction simp simpa rw rfl omega ring linarith norm_num decide aesop have show calc unfold split",
+    },
+    tla: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec TypeOK Invariant Safety Liveness TRUE FALSE UNCHANGED IF THEN ELSE LET IN DOMAIN SUBSET Cardinality Len Append Seq INSTANCE ASSUME THEOREM PROVE WF SF process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    pluscal: {
+      keywords: "MODULE EXTENDS CONSTANT CONSTANTS VARIABLE VARIABLES Init Next Spec process begin end while either or await skip macro define algorithm fair",
+      tactics: "",
+    },
+    python: {
+      keywords: "and as assert async await break case class continue def del elif else except finally for from if import in is lambda match nonlocal not or pass raise return try while with yield True False None",
+      tactics: "",
+    },
+    typescript: {
+      keywords: "as async await break case catch class const debugger default delete do else export extends false finally for from function if implements import in instanceof interface let new null of package private protected public return static super switch this throw true try type typeof var void while with yield",
+      tactics: "",
+    },
+    haskell: {
+      keywords: "case class data default deriving do else if import in let module new of then type where forall",
+      tactics: "",
+    },
+    shell: {
+      keywords: "if then else fi for in do done case esac function export cd printf echo",
+      tactics: "",
+    }
+  };
+  function hasWord(set, token) {
+    return set && set.split(/\s+/).indexOf(token) !== -1;
+  }
+  function classifyToken(token, language) {
+    var set = languageSets[language] || languageSets.python;
+    if (token.charCodeAt(0) === 92 && token.charAt(1) === "*") return "hl-comment";
+    if (token.indexOf("--") === 0 || token.indexOf("#") === 0 || token.indexOf("//") === 0 || token.indexOf("/*") === 0 || token.indexOf("/-") === 0 || token.indexOf("(*") === 0 || token.indexOf("\\\\*") === 0) return "hl-comment";
+    if (/^(["'\x60])/.test(token)) return "hl-string";
+    if (/^\d/.test(token)) return "hl-number";
+    if (language === "python" && /^@/.test(token)) return "hl-decorator";
+    if (hasWord(set.tactics, token)) return "hl-function";
+    if (hasWord(set.keywords, token)) return "hl-keyword";
+    var operator = token === "<>" || token === "[]" || token === "~>" || token === "=>" || token === "->" || token === "<-" || token === ":=" || token === "===" || token === "!==" || token === "==" || token === "!=" || token === "<=" || token === ">=" || token === "&&" || token === "||" || token === "++" || token === "--" || token === "=" || token === "~" || token === "#" || token === "'" || token === "|" || token === ":" || token === "<" || token === ">" || token === "+" || token === "*" || token === "/" || token === "-" || token.indexOf("\\\\") !== -1;
+    if (token.charCodeAt(0) === 92 || token.charCodeAt(token.length - 1) === 92) return "hl-operator";
+    if (operator) return "hl-operator";
+    if (/^[A-Za-z_][A-Za-z0-9_']*$/.test(token) && /^[A-Z]/.test(token)) return "hl-function";
+    return "";
+  }
+  function highlight(source, language) {
+    var pattern = /(\\\*[^\n]*|--[^\n]*|#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\/-[\s\S]*?-\*|\(\*[\s\S]*?\*\)|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\x60(?:\\.|[^\x60\\])*\x60|\b\d+(?:\.\d+)?\b|@[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_']*|\/\\|\\\/|<>|\[\]|~>|=>|->|<-|:=|===|!==|==|!=|<=|>=|&&|\|\||\+\+|--|[=~#'|:<>+*\/-])/gm;
+    return source.replace(pattern, function (token) {
+      var kind = classifyToken(token, language);
+      return kind ? '<span class="' + kind + '">' + escapeHTML(token) + "</span>" : escapeHTML(token);
+    });
+  }
+  function decorateCode(wrapper) {
+    var code = wrapper.querySelector("code");
+    if (!code) return;
+    var raw = code.textContent.replace(/\n$/, "");
+    wrapper.setAttribute("data-raw", raw);
+    var highlighted = highlight(raw, wrapper.getAttribute("data-lang") || "python");
+    code.innerHTML = highlighted.split("\n").map(function (line, index) {
+      return '<span class="code-line"><span class="code-line-number" aria-hidden="true">' +
+        (index + 1) + '</span><span class="code-line-text">' + (line || " ") +
+        "</span></span>";
+    }).join("\n");
+  }
+  document.querySelectorAll(".code-wrap").forEach(decorateCode);
+
+  function fallbackCopy(raw, done) {
+    var area = document.createElement("textarea");
+    area.value = raw;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    try { document.execCommand("copy"); done(); }
+    finally { document.body.removeChild(area); }
+  }
+  function copyCode(button) {
+    var wrapper = button.closest(".code-wrap");
+    var raw = wrapper ? wrapper.getAttribute("data-raw") : "";
+    if (!raw) return;
+    var done = function () {
+      var old = button.textContent;
+      button.textContent = "コピー済み";
+      button.setAttribute("aria-label", "コードをコピーしました");
+      window.setTimeout(function () {
+        button.textContent = old;
+        button.setAttribute("aria-label", "コードだけをコピー");
+      }, 1400);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(raw).then(done).catch(function () { fallbackCopy(raw, done); });
+    } else {
+      fallbackCopy(raw, done);
+    }
+  }
+  document.querySelectorAll(".copy-button").forEach(function (button) {
+    button.addEventListener("click", function () { copyCode(button); });
+  });
+  window.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeDrawer();
+  });
+})();
+
+</script>
+</body>
+</html>
