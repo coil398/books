@@ -497,7 +497,7 @@ Spec == Init /\ [][Next]_&lt;&lt;turn, moves&gt;&gt;
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Match ----
-EXTENDS FiniteSets
+EXTENDS FiniteSets, Naturals
 
 CONSTANT Players
 VARIABLE waiting, matched
@@ -559,6 +559,11 @@ Next == (\E a, b \in Players, i \in Items : Offer(a,b,i))
      \/ (\E o \in offers : Accept(o))
 
 Spec == Init /\ [][Next]_&lt;&lt;inventory, offers&gt;&gt;
+
+\* TLC の .cfg では関数・レコード式を定数値として直接書けないため、
+\* 初期在庫はモジュール側で定義し、cfg からは operator override で差し込む
+InitialInventoryModel ==
+  [p \in Players |-&gt; IF p = "alice" THEN {"sword"} ELSE {}]
 ===============================================</code></pre></div>
 </div>
 <div class="code-wrap" data-lang="tla">
@@ -566,7 +571,7 @@ Spec == Init /\ [][Next]_&lt;&lt;inventory, offers&gt;&gt;
 <div class="code-scroll"><pre class="code-block"><code>SPECIFICATION Spec
 CONSTANT Players = {"alice", "bob"}
 CONSTANT Items = {"sword"}
-CONSTANT InitialInventory = ["alice" |-&gt; {"sword"}, "bob" |-&gt; {}]</code></pre></div>
+CONSTANT InitialInventory &lt;- InitialInventoryModel</code></pre></div>
 </div>
 <p>実装が二つのDB書き込みなら、モデルの原子性はありません。トランザクション、イベントソーシング、補償処理のどれを採用するかを仕様にし、途中状態を観測できるかをPBTと統合テストで検査します。</p>
 </section>
@@ -629,7 +634,7 @@ Step == /\ i &lt; N
         /\ total' = total + i'
 
 Done == i = N
-Invariant == total = i * (i + 1) \div 2
+Invariant == total = (i * (i + 1)) \div 2
 Next == Step
 Spec == Init /\ [][Next]_&lt;&lt;i, total&gt;&gt;
 ==============================================</code></pre></div>
@@ -674,7 +679,7 @@ Spec == Init /\ [][Next]_resource
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE RoundRobin ----
-EXTENDS FiniteSets
+EXTENDS FiniteSets, Naturals
 
 CONSTANT Proc, InitialProc, NextProc
 ASSUME /\ InitialProc \in Proc
