@@ -415,7 +415,8 @@ def discount (amount rate : Nat) : Nat :=
 theorem discount_le_amount (amount rate : Nat) (h : rate &lt;= 100) :
     discount amount rate &lt;= amount := by
   unfold discount
-  exact Nat.div_le_of_le_mul (Nat.mul_le_mul_left amount h)</code></pre></div>
+  exact Nat.div_le_of_le_mul (by
+    simpa [Nat.mul_comm] using Nat.mul_le_mul_left amount h)</code></pre></div>
 </div>
 <p>割引率の範囲はLeanで証明できる一方、決済サービスが二回呼ばれないことは別問題です。証明できる核と、実行順序を扱うモデルを無理に一つへ詰め込みません。</p>
 </section>

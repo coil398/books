@@ -323,7 +323,7 @@ def test_identity(s: str) -&gt; None:
 <div class="code-toolbar"><span class="code-language">Shell / TypeScript</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>npm init -y
 mkdir -p test
-npm install --save-dev typescript tsx fast-check vitest</code></pre></div>
+npm install --save-dev typescript tsx fast-check@4.9.0 vitest</code></pre></div>
 </div>
 <p>次のコードを`test/reverse.test.ts`として保存してから、Vitestを実行します。</p>
 <div class="code-wrap" data-lang="typescript">
@@ -334,7 +334,9 @@ import { test } from "vitest";
 
 test("reverse is involutive", () =&gt; {
   fc.assert(fc.property(fc.array(fc.integer()), xs =&gt; {
-    return [...xs].reverse().reverse().every((x, i) =&gt; x === xs[i]);
+    const restored = [...xs].reverse().reverse();
+    return restored.length === xs.length &amp;&amp;
+      restored.every((x, i) =&gt; x === xs[i]);
   }));
 });</code></pre></div>
 </div>
@@ -502,15 +504,20 @@ commands = st.builds(
 <div class="code-toolbar"><span class="code-language">TypeScript / test/seed.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>// test/seed.test.ts
 import fc from "fast-check";
+import { test } from "vitest";
 
-fc.assert(
-  fc.property(fc.array(fc.integer()), xs =&gt; {
-    return xs.length &lt; 100;
-  }),
-  { seed: 12345, path: "0:1" },
-);</code></pre></div>
+// fast-check 4.9.0で記録した、意図的に失敗する再現例
+test("replays the recorded length counterexample", () =&gt; {
+  fc.assert(
+    fc.property(
+      fc.array(fc.integer(), { minLength: 1, maxLength: 20 }),
+      xs =&gt; xs.length &lt; 5,
+    ),
+    { seed: 12345, path: "2:1:1:1:4:6:7:7" },
+  );
+});</code></pre></div>
 </div>
-<p>CIログからseedをコピーするだけで終わらせず、縮小後の入力と性質名を固定fixtureにします。バージョンアップ時はfixtureが仕様として有効か確認し、古いseedに依存しすぎないようにします。</p>
+<p>このファイルはseed/path再生を観察するための意図的な失敗例で、fast-check 4.9.0では`[0, 0, 0, 0, 0]`を再現して赤になります。通常の緑のテスト群とは分けて実行します。CIログからseedをコピーするだけで終わらせず、縮小後の入力と性質名を固定fixtureにします。バージョンアップ時はfixtureが仕様として有効か確認し、古いseedに依存しすぎないようにします。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / regression</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>def normalize(order: dict[str, list[int]]) -&gt; dict[str, list[int]]:
@@ -526,6 +533,22 @@ def test_regression_for_old_failure():
 <section id="stateful">
 <h2 id="stateful-heading">ステートフルテスト</h2>
 <p>一回の関数呼び出しではなく、操作列で状態機械を揺さぶります。モデルは簡単であるほどよく、実装をそのままコピーして比較しないことが重要です。</p>
+<p>次の最小実装をプロジェクト直下の`app.py`へ保存すると、後続の`from app import SetImplementation`をそのまま実行できます。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / app.py</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>class SetImplementation:
+    def __init__(self):
+        self._values: set[int] = set()
+
+    def add(self, value: int) -&gt; None:
+        self._values.add(value)
+
+    def discard(self, value: int) -&gt; None:
+        self._values.discard(value)
+
+    def snapshot(self) -&gt; set[int]:
+        return set(self._values)</code></pre></div>
+</div>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / RuleBasedStateMachine</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>from collections.abc import Callable
@@ -583,10 +606,32 @@ TestSetModel = make_set_model(SetImplementation).TestCase</code></pre></div>
 <section id="model-based">
 <h2 id="model-based-heading">モデルベーステストとオラクル</h2>
 <p><dfn>モデルベーステスト</dfn>では、簡単な状態モデルに同じコマンド列を与え、実装の応答と状態を比較します。<dfn>オラクル</dfn>は実装と独立した判定基準です。</p>
+<p>テストと同じ`test/`ディレクトリへ、公開APIだけを持つ最小のDoor実装を置きます。</p>
+<div class="code-wrap" data-lang="typescript">
+<div class="code-toolbar"><span class="code-language">TypeScript / test/door.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>export type DoorState = "closed" | "open";
+
+export class Door {
+  private current: DoorState = "closed";
+
+  open(): void {
+    this.current = "open";
+  }
+
+  close(): void {
+    this.current = "closed";
+  }
+
+  state(): DoorState {
+    return this.current;
+  }
+}</code></pre></div>
+</div>
 <div class="code-wrap" data-lang="typescript">
 <div class="code-toolbar"><span class="code-language">TypeScript / test/model.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>// test/model.test.ts
 import fc from "fast-check";
+import { test } from "vitest";
 import { Door } from "./door";
 
 type State = "closed" | "open";
@@ -597,19 +642,21 @@ const stepModel = (state: State, command: Cmd): State =&gt;
   command === "close" &amp;&amp; state === "open" ? "closed" :
   state;
 
-fc.assert(fc.property(
-  fc.array(fc.constantFrom&lt;Cmd&gt;("open", "close")),
-  commands =&gt; {
-    let model: State = "closed";
-    const actual = new Door();
-    for (const command of commands) {
-      model = stepModel(model, command);
-      if (command === "open") actual.open();
-      else actual.close();
-    }
-    return actual.state() === model;
-  },
-));</code></pre></div>
+test("door follows the state model", () =&gt; {
+  fc.assert(fc.property(
+    fc.array(fc.constantFrom&lt;Cmd&gt;("open", "close")),
+    commands =&gt; {
+      let model: State = "closed";
+      const actual = new Door();
+      for (const command of commands) {
+        model = stepModel(model, command);
+        if (command === "open") actual.open();
+        else actual.close();
+      }
+      return actual.state() === model;
+    },
+  ));
+});</code></pre></div>
 </div>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / independent oracle</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
@@ -638,10 +685,30 @@ def nonempty_pair(draw):
     return xs, xs[index]</code></pre></div>
 </div>
 <p>依存するindexを先に独立生成すると、リスト長との矛盾を`assume`で捨てることになります。`composite`で同じ生成手順にすると、常に有効なペアを作れます。</p>
+<p>操作列テストが読み込む最小実装も`test/collection.ts`へ置きます。`values`は内部配列のコピーを返し、テストから状態を観測できるようにします。</p>
+<div class="code-wrap" data-lang="typescript">
+<div class="code-toolbar"><span class="code-language">TypeScript / test/collection.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>export class Collection {
+  private items: number[] = [];
+
+  add(value: number): void {
+    this.items.push(value);
+  }
+
+  clear(): void {
+    this.items = [];
+  }
+
+  values(): number[] {
+    return [...this.items];
+  }
+}</code></pre></div>
+</div>
 <div class="code-wrap" data-lang="typescript">
 <div class="code-toolbar"><span class="code-language">TypeScript / test/collection.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>// test/collection.test.ts
 import fc from "fast-check";
+import { test } from "vitest";
 import { Collection } from "./collection";
 
 type Command =
@@ -653,25 +720,27 @@ const commandArb = fc.oneof(
   fc.constant({ kind: "clear" as const }),
 );
 
-fc.assert(fc.property(
-  fc.array(commandArb),
-  commands =&gt; {
-    const model: number[] = [];
-    const actual = new Collection();
-    for (const command of commands) {
-      if (command.kind === "add") {
-        model.push(command.n);
-        actual.add(command.n);
-      } else {
-        model.splice(0);
-        actual.clear();
+test("collection follows the command model", () =&gt; {
+  fc.assert(fc.property(
+    fc.array(commandArb),
+    commands =&gt; {
+      const model: number[] = [];
+      const actual = new Collection();
+      for (const command of commands) {
+        if (command.kind === "add") {
+          model.push(command.n);
+          actual.add(command.n);
+        } else {
+          model.splice(0);
+          actual.clear();
+        }
       }
-    }
-    const values = actual.values();
-    return values.length === model.length &amp;&amp;
-      values.every((value, index) =&gt; value === model[index]);
-  },
-));</code></pre></div>
+      const values = actual.values();
+      return values.length === model.length &amp;&amp;
+        values.every((value, index) =&gt; value === model[index]);
+    },
+  ));
+});</code></pre></div>
 </div>
 <p>union型でコマンドの引数不足をコンパイル時に見つけ、generatorが作る操作列の意味を明示します。型検査とPBTは別の証拠ですが、組み合わせると失敗入力を読みやすくできます。</p>
 </section>
@@ -733,6 +802,7 @@ on:
 
 jobs:
   fast:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -743,6 +813,7 @@ jobs:
       - run: pytest -q tests/property
 
   nightly:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

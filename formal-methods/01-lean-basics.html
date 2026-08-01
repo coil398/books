@@ -308,20 +308,38 @@ elan default leanprover/lean4:v4.19.0
 lake new fm-basics math
 cd fm-basics</code></pre></div>
 </div>
-<p>インストーラは親シェルの`PATH`を変更できないため、`source`を挟んでから`elan`を実行します。`stable`のような更新されるチャンネルは使わず、ここでは`leanprover/lean4:v4.19.0`を`lean-toolchain`へ保存してコミットします。教材を試すだけなら`lake new`でプロジェクトの雛形を作れますが、教材のコードは自動では`Main.lean`になりません。</p>
+<p>インストーラは親シェルの`PATH`を変更できないため、`source`を挟んでから`elan`を実行します。`stable`のような更新されるチャンネルは使いません。`lake new ... math`が作る雛形は実行時点のMathlibを参照し、その`lean-toolchain`も取得するため、次の二ファイルを依存解決より先に置き換えてLeanとMathlibをともに4.19.0へ固定します。</p>
 <aside class="callout warning" role="note"><strong>版のずれは証明のずれになる</strong><p>Lean本体、Mathlib、エディタ拡張の版が違うと、同じ名前の定理やsimpの挙動が変わることがあります。証明が通った画面のスクリーンショットではなく、CIのtoolchainを証拠にします。</p></aside>
-<div class="code-wrap" data-lang="text">
-<div class="code-toolbar"><span class="code-language">プロジェクト確認</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>lean-toolchain
-lakefile.toml
-lake-manifest.json
-Main.lean</code></pre></div>
-</div>
-<p>`fm-basics/lean-toolchain`を次の一行で保存してからコミットします。</p>
 <div class="code-wrap" data-lang="text">
 <div class="code-toolbar"><span class="code-language">fm-basics/lean-toolchain</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>leanprover/lean4:v4.19.0</code></pre></div>
 </div>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">fm-basics/lakefile.toml</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>name = "fm-basics"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["FmBasics"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.19.0"
+
+[[lean_lib]]
+name = "FmBasics"</code></pre></div>
+</div>
+<p>この章の前半は`α`などの暗黙の型変数を使うため、雛形の`autoImplicit = false`は`true`へ変更します。後半では、必要な箇所だけ`set_option autoImplicit false`にして明示性を学びます。二ファイルを保存したら、固定したtoolchainを保ったまま依存を解決し、Mathlibのビルド済みキャッシュを取得します。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>lake update --keep-toolchain
+lake exe cache get</code></pre></div>
+</div>
+<p>`lean-toolchain`、`lakefile.toml`、生成された`lake-manifest.json`をコミットすると、手元とCIで同じ依存グラフを再現できます。教材のコードは自動では`Main.lean`になりません。</p>
 </section>
 <section id="minimal">
 <h2 id="minimal-heading">最小ファイルを読む</h2>
@@ -340,9 +358,9 @@ example (n : Nat) : double n = n + n := by
 <p>このコードを`fm-basics/Main.lean`として保存してから、プロジェクトディレクトリで検査します。</p>
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>lake env lean Main.lean
-lake build</code></pre></div>
+<div class="code-scroll"><pre class="code-block"><code>lake env lean -DwarningAsError=true Main.lean</code></pre></div>
 </div>
+<p>`math`雛形の`lake build`は既定のライブラリをビルドしますが、手で追加した`Main.lean`はターゲットではありません。ここではファイルを直接検査し、警告も失敗として扱います。</p>
 <p>`def`は計算可能な定義、`theorem`は名前を持つ証明付き宣言、`example`は検証後に名前を残さない宣言です。`by`の後ろはtactic列ですが、最終的には命題の型を持つ項を構築しています。</p>
 <p>`rfl`が通るのは、定義を展開した左右が定義上同じだからです。`simp`は登録された簡約規則を使います。どちらも魔法の正しさを追加するのではなく、Leanがすでに持つ定義や定理を適用しています。</p>
 <aside class="callout tip" role="note"><strong>最初はexampleから</strong><p>名前付き定理を長く書く前に、`example`でゴールとtacticを小さく試します。通ったらドメイン名を含む定理名へ昇格させ、レビューで検索できる形にします。</p></aside>
@@ -448,7 +466,8 @@ theorem length_append (xs ys : List α) :
     (xs ++ ys).length = xs.length + ys.length := by
   induction xs with
   | nil =&gt; simp
-  | cons x xs ih =&gt; simp [ih]</code></pre></div>
+  | cons x xs ih =&gt;
+      simp [ih, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]</code></pre></div>
 </div>
 <p>リストの`cons`ケースでは、先頭要素xと残りxsに分かれ、xsについての`ih`を使います。証明が長くなるときは、帰納対象を先に考えます。`xs`全体を固定したまま別の引数だけを帰納すると、必要な一般性を失うことがあります。</p>
 <aside class="callout warning" role="note"><strong>帰納法の前に定義を確認する</strong><p>関数の再帰方向とデータ型のコンストラクタが合わないと、ゴールが扱いにくくなります。まず小さな`#check`と`example`で、どの引数が構造的に減っているか確認します。</p></aside>
@@ -503,7 +522,7 @@ def Quantity.add (a b : Quantity) : Quantity :=
       linarith [a.nonnegative, b.nonnegative] }
 
 example (a b : Quantity) :
-    (Quantity.add a b).nonnegative := by
+    0 ≤ (Quantity.add a b).value := by
   exact (Quantity.add a b).nonnegative</code></pre></div>
 </div>
 <p>ただしフィールドを公開すると、利用側が不変条件を直接作るための設計が変わることがあります。スマートコンストラクタ、opaqueな抽象、validatorの境界を検討します。</p>
@@ -529,7 +548,7 @@ def explicitIdentity {α : Type} (x : α) : α := x</code></pre></div>
 <div class="code-scroll"><pre class="code-block"><code>import Mathlib
 
 example (n : Nat) : n + 1 = 1 + n := by
-  simpa [Nat.add_comm]</code></pre></div>
+  simp [Nat.add_comm]</code></pre></div>
 </div>
 <div class="table-wrap"><table><thead><tr><th>エラー</th><th>典型原因</th><th>最初の対処</th></tr></thead><tbody><tr><td>type mismatch</td><td>項の型が違う</td><td>`#check`と型注釈を追加</td></tr><tr><td>unsolved goals</td><td>前提・場合分け不足</td><td>`intro`、`cases`、`induction`を小さく試す</td></tr><tr><td>unknown constant</td><td>importや名前が違う</td><td>`#check`とMathlibの検索</td></tr><tr><td>tactic failed</td><td>tacticの対象外</td><td>手動変形、別tactic、補題化</td></tr><tr><td>maximum recursion</td><td>定義・simp規則のループ</td><td>`simp only`と定義の見直し</td></tr></tbody></table></div>
 <p>ゴール画面を読み飛ばさないでください。失敗した証明を最小の`example`へ切り出し、定義・前提・結論のどこが不一致かを分けます。長い証明の最後でエラーを追うより、途中の型を`#check`する方が速いことが多いです。</p>
@@ -557,12 +576,7 @@ theorem future_proof : 2 + 2 = 4 := by
 <p>`sorry`は仮の証明を受け入れ、警告を出します。設計中に依存関係を先に進める用途はありますが、保証の証拠ではありません。CIでは`sorry`の利用を警告として拾い、リリース対象からゼロにします。</p>
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>if ! lake build &gt; build.log 2&gt;&amp;1; then
-  cat build.log
-  exit 1
-fi
-cat build.log
-! rg -q "declaration uses 'sorry'" build.log</code></pre></div>
+<div class="code-scroll"><pre class="code-block"><code>lake env lean -DwarningAsError=true Main.lean</code></pre></div>
 </div>
 <aside class="callout danger" role="note"><strong>未証明を完了扱いしない</strong><p>定理名が存在しても、証明本体に`sorry`が残るなら、プロジェクトの保証は未完了です。issue、担当者、期限を記録し、警告を見逃さないCIにします。</p></aside>
 </section>
@@ -582,14 +596,12 @@ theorem factorial_two : factorial 2 = 2 := by
 def main : IO Unit := do
   IO.println s!"2! = {factorial 2}"</code></pre></div>
 </div>
-<p>数学的な定義とIOを分離すると、純粋な定理を実装の核へ置きやすくなります。実行方法はプロジェクトの構成に依存するため、`lake env lean`で宣言を検査し、必要ならLakeの実行ターゲットを追加します。</p>
+<p>数学的な定義とIOを分離すると、純粋な定理を実装の核へ置きやすくなります。ここでは先に固定した`fm-basics`を使い、`--run`で宣言の検査と`main`の実行を同時に行います。継続的に実行するプログラムなら、Lakeへ`lean_exe`ターゲットを追加します。</p>
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>lake new lean-demo math
-cd lean-demo
+<div class="code-scroll"><pre class="code-block"><code>cd /path/to/fm-basics
 cp /path/to/Main.lean Main.lean
-lake env lean Main.lean
-lake build</code></pre></div>
+lake env lean -DwarningAsError=true --run Main.lean</code></pre></div>
 </div>
 <p>教材の複数例を一つの`Main.lean`へ貼ると、定理名の衝突やimportの違いが出ます。最初は章の例を一つずつ`example`にし、動いた後でnamespaceとファイル分割を行います。</p>
 </section>

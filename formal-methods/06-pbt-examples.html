@@ -303,10 +303,71 @@ pre code { display: block; }
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>python -m venv .venv
 . .venv/bin/activate
-python -m pip install hypothesis pytest
-pytest -q</code></pre></div>
+python -m pip install hypothesis pytest</code></pre></div>
+</div>
+<p>後続の状態機械とfake依存の例が読み込む最小実装を、プロジェクト直下の`app.py`へ保存します。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / app.py</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from collections.abc import Callable
+
+
+class RateLimiter:
+    def __init__(self, clock: Callable[[], int], limit: int = 3,
+                 window: int = 60):
+        self._clock = clock
+        self._limit = limit
+        self._window = window
+        self._calls: list[int] = []
+
+    def _prune(self) -&gt; None:
+        now = self._clock()
+        self._calls = [
+            timestamp for timestamp in self._calls
+            if timestamp &gt; now - self._window
+        ]
+
+    def allow(self) -&gt; bool:
+        self._prune()
+        if len(self._calls) &gt;= self._limit:
+            return False
+        self._calls.append(self._clock())
+        return True
+
+    def snapshot(self) -&gt; list[int]:
+        self._prune()
+        return list(self._calls)
+
+
+class Inventory:
+    def __init__(self):
+        self._items: dict[int, int] = {}
+
+    def add(self, item: int, amount: int) -&gt; None:
+        self._items[item] = self._items.get(item, 0) + amount
+
+    def remove(self, item: int, amount: int) -&gt; int:
+        old = self._items.get(item, 0)
+        taken = min(old, amount)
+        self._items[item] = old - taken
+        return taken
+
+    def snapshot(self) -&gt; dict[int, int]:
+        return dict(self._items)
+
+
+class Checkout:
+    def __init__(self, payment):
+        self._payment = payment
+
+    def pay(self, key: str, cents: int) -&gt; bool:
+        return self._payment.charge(key, cents)</code></pre></div>
 </div>
 <p>各例は、保証したいこと・なぜ必要か・破れたときの影響をコードの前に置きます。<dfn>shrink</dfn>で得た小さな反例、許容誤差、無効入力、旧スキーマ、seed再現性は「テスト実装の細部」ではなく契約です。</p>
+<p>選んだ例を`test_*.py`へ保存した後、プロジェクト直下から実行します。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>pytest -q</code></pre></div>
+</div>
 <aside class="callout info" role="note"><strong>入力範囲を隠さない</strong><p>NaNを除外したなら、NaNを扱わない仕様だと記録します。generatorのmin/max、許容誤差、操作列の長さをCIログとテスト名に残します。</p></aside>
 </section>
 <section id="web-roundtrip">
@@ -489,22 +550,29 @@ def test_add_associative(a: int, b: int, c: int):
 <h3 id="math-float">数学例2：浮動小数の誤差境界</h3>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import example, given, strategies as st
 
 
-finite = st.floats(
-    allow_nan=False,
-    allow_infinity=False,
-    width=64,
-)
+def repeated_add(value: float, count: int) -&gt; float:
+    total = 0.0
+    for _ in range(count):
+        total += value
+    return total
 
 
-@given(finite)
-def test_float_identity_has_documented_tolerance(x: float):
-    error = abs((x + 1.0) - x - 1.0)
-    assert error &lt;= 2.0**-40 or abs(x) &gt; 2.0**40</code></pre></div>
+@given(st.integers(min_value=1, max_value=1_000))
+@example(10)
+def test_float_sum_has_documented_tolerance(count: int):
+    actual = repeated_add(0.1, count)
+    reference = 0.1 * count
+    error = abs(actual - reference)
+    tolerance = max(1e-15, abs(reference) * 5e-14)
+
+    if count == 10:
+        assert error &gt; 0.0
+    assert error &lt;= tolerance</code></pre></div>
 </div>
-<p>完全一致ではなく、適用範囲と許容誤差を仕様にします。大きすぎる値を別ケースに分けるなど、なぜその境界を置いたかを説明します。</p>
+<p>逐次加算と一回の乗算を比較し、絶対誤差と相対誤差を組み合わせた上限を仕様にします。`@example(10)`では丸め差が実際に非ゼロになることも確認するため、許容誤差が飾りになりません。回数を1〜1000へ限定した理由と係数を、実装・プラットフォームに合わせて記録します。</p>
 </section>
 <section id="math-sort">
 <h2 id="math-sort-heading">数学例3：ソートと多重集合</h2>
@@ -811,7 +879,7 @@ def test_payment_arguments_are_observable(key: str, cents: int):
 <h2 id="summary-heading">まとめ</h2>
 <p>Webでは往復・認可・バリデーション・時計、数学では代数・ソート・丸め、物理では誤差・対称性・単位、ゲームでは状態機械・seed・保存・単調性を検査しました。</p>
 <p>領域ごとにgeneratorを狭く設計し、外部依存はfakeで観測し、許容誤差と特殊値を契約にします。次章では、TLA+の設計反例、Leanの計算核、PBTの実装を一つの購入フローで結びます。</p>
-</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>往復性</dt><dd>encodeしてdecodeするなど、変換の前後で意味が戻る性質。</dd><dt>許容誤差</dt><dd>浮動小数や近似計算で許される差の上限。</dd><dt>fake clock</dt><dd>テストから時間を進められる、注入可能な時計。</dd><dt>モデル比較</dt><dd>簡単な独立モデルと実装の状態・結果を比べる方法。</dd><dt>回帰fixture</dt><dd>過去の失敗入力を固定した再現用のテストデータ。</dd><dt>境界値</dt><dd>最小・最大・空・閾値直前後など、契約が変わる入力。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：JSON往復propertyで、generatorが非負centsだけを作ると何が未検査ですか。</summary><div class="answer">負数が合法か、最大値、未知フィールド、Decimalや日付などの契約です。</div></details><details class="check-item"><summary>問2：物理の一ステップ誤差の反例を消してはいけない理由は何ですか。</summary><div class="answer">積分器の適用範囲やdtの上限を示す設計資料になるためです。</div></details><details class="check-item"><summary>問3：ゲームのseedだけを保存するのが不十分な理由は何ですか。</summary><div class="answer">ルール版・乱数実装・入力が変わると同じseedでも結果が変わるためです。</div></details><details class="check-item"><summary>問4：fake依存で観測すべきものは何ですか。</summary><div class="answer">呼び出し回数、引数、成功・失敗・タイムアウトなど、契約に必要な観測点です。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="05-pbt-basics.html"><small>← 前の章</small><strong>05　PBT 基礎</strong></a><a href="07-combining.html"><small>次の章 →</small><strong>07　3手法を組み合わせる</strong></a></nav>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>往復性</dt><dd>encodeしてdecodeするなど、変換の前後で意味が戻る性質。</dd><dt>許容誤差</dt><dd>浮動小数や近似計算で許される差の上限。</dd><dt>fake clock</dt><dd>テストから時間を進められる、注入可能な時計。</dd><dt>モデル比較</dt><dd>簡単な独立モデルと実装の状態・結果を比べる方法。</dd><dt>回帰fixture</dt><dd>過去の失敗入力を固定した再現用のテストデータ。</dd><dt>境界値</dt><dd>最小・最大・空・閾値直前後など、契約が変わる入力。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：JSON往復propertyで、generatorが非負centsだけを作ると何が未検査ですか。</summary><div class="answer">負数が合法か、10**8を超える値をどう扱うか、未知・欠落フィールド、Decimalや日付などの契約です。generatorは最大値10**8そのものを含みます。</div></details><details class="check-item"><summary>問2：物理の一ステップ誤差の反例を消してはいけない理由は何ですか。</summary><div class="answer">積分器の適用範囲やdtの上限を示す設計資料になるためです。</div></details><details class="check-item"><summary>問3：ゲームのseedだけを保存するのが不十分な理由は何ですか。</summary><div class="answer">ルール版・乱数実装・入力が変わると同じseedでも結果が変わるためです。</div></details><details class="check-item"><summary>問4：fake依存で観測すべきものは何ですか。</summary><div class="answer">呼び出し回数、引数、成功・失敗・タイムアウトなど、契約に必要な観測点です。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="05-pbt-basics.html"><small>← 前の章</small><strong>05　PBT 基礎</strong></a><a href="07-combining.html"><small>次の章 →</small><strong>07　3手法を組み合わせる</strong></a></nav>
 <a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
 </main>
 <script>

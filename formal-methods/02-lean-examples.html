@@ -302,11 +302,40 @@ pre code { display: block; }
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>lake new lean-examples math
-cd lean-examples
-cp /path/to/Main.lean Main.lean
-lake env lean Main.lean
-lake build</code></pre></div>
+cd lean-examples</code></pre></div>
 </div>
+<p>`math`雛形は実行時点のMathlib用toolchainを取得するため、依存解決の前に次の二ファイルでLeanとMathlibを4.19.0へ固定します。この章では暗黙の型変数`α`と`β`を使うので、`autoImplicit`も有効にします。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">lean-examples/lean-toolchain</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>leanprover/lean4:v4.19.0</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">lean-examples/lakefile.toml</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>name = "lean-examples"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["LeanExamples"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.19.0"
+
+[[lean_lib]]
+name = "LeanExamples"</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>lake update --keep-toolchain
+lake exe cache get
+cp /path/to/Main.lean Main.lean
+lake env lean -DwarningAsError=true Main.lean</code></pre></div>
+</div>
+<p>`lake build`は雛形のライブラリだけを対象にし、手で置いた`Main.lean`を検査しません。ここではファイルを直接指定し、`sorry`を含む警告も失敗にします。</p>
 <p>一つのファイルへ多くの例を貼ると、定理名の衝突や型変数の推論差が出ます。まず一例ずつ`example`として動かし、意味が固まったらnamespaceとファイルを分けます。</p>
 <aside class="callout warning" role="note"><strong>コードが通ることと仕様が正しいことは別</strong><p>Leanが検査するのは書かれた定義と定理です。物理法則の近似範囲、ゲームのルール、WebのミドルウェアやDB接続は別の境界として記録します。</p></aside>
 </section>
@@ -339,7 +368,8 @@ theorem append_length (xs ys : List α) :
     (xs ++ ys).length = xs.length + ys.length := by
   induction xs with
   | nil =&gt; simp
-  | cons x xs ih =&gt; simp [ih]</code></pre></div>
+  | cons x xs ih =&gt;
+      simp [ih, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm]</code></pre></div>
 </div>
 <h3 id="math-max">例3：最大値の上限</h3>
 <div class="code-wrap" data-lang="lean">
@@ -419,14 +449,14 @@ def Meter.add (a b : Meter) : Meter :=
 def Meter.scale (k : ℚ) (a : Meter) : Meter :=
   ⟨k * a.value⟩
 
-def velocity (d : Meter) (t : Second) (h : t.value ≠ 0) : ℚ :=
+def velocity (d : Meter) (t : Second) (_h : t.value ≠ 0) : ℚ :=
   d.value / t.value
 
 example (d : Meter) : Meter.scale 1 d = d := by
   cases d
   simp [Meter.scale]</code></pre></div>
 </div>
-<p>保証したいのは単位の取り違えが型として表面化することです。破れると、シミュレーションの時間刻みを距離として扱い、速度や位置が意味のない値になります。</p>
+<p>保証したいのは単位の取り違えが型として表面化することです。`ℚ`の除算自体は0でも定義されるため、`_h`は計算には使わず、呼び出し側へ非ゼロの証明を要求します。先頭の`_`は、その意図を未使用変数lintにも伝えます。単位の区別が破れると、シミュレーションの時間刻みを距離として扱い、速度や位置が意味のない値になります。</p>
 <h3 id="physics-discrete">例：等加速度の離散式</h3>
 <div class="code-wrap" data-lang="lean">
 <div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
@@ -442,6 +472,7 @@ theorem nextPosition_zero_dt (x v a : ℚ) :
 theorem nextPosition_affine (x v a dt : ℚ) :
     nextPosition x v a dt - x =
       v * dt + (a * dt^2) / 2 := by
+  unfold nextPosition
   ring</code></pre></div>
 </div>
 <p>時間刻み0で位置が変わらないことは、積分器の境界条件です。破れると停止したシミュレーションでも状態が動きます。浮動小数・丸め・安定性はこの代数式の対象外なので、PBTで許容誤差を検査します。</p>
@@ -455,6 +486,7 @@ def energy (m v g h : ℚ) : ℚ :=
 
 theorem energy_swap (m v g h : ℚ) :
     energy m v g h = m * (v^2 / 2 + g * h) := by
+  unfold energy
   ring</code></pre></div>
 </div>
 <aside class="callout warning" role="note"><strong>式の同値性は物理法則そのものではない</strong><p>保存を主張するには運動方程式、境界、初期条件、誤差モデルが必要です。Leanが示すのは、ここで定義した式の代数的同値性です。</p></aside>
@@ -477,7 +509,11 @@ def result (a b : Int) : Result :=
 theorem result_cases (a b : Int) :
     result a b = .win ∨ result a b = .lose ∨ result a b = .draw := by
   unfold result
-  split &lt;;&gt; simp_all</code></pre></div>
+  by_cases hgt : a &gt; b
+  · simp [hgt]
+  · by_cases hlt : a &lt; b
+    · simp [hgt, hlt]
+    · simp [hgt, hlt]</code></pre></div>
 </div>
 <h3 id="game-score">例2：スコアの単調性</h3>
 <p>ボーナスを増やしたのにスコアが下がらないことを保証します。ランキングの逆転や報酬の不正減算を、数学的なpropertyとして固定できます。</p>
@@ -514,7 +550,7 @@ theorem place_true (b : Board) (i : Fin 9) :
 <section id="web-auth">
 <h2 id="web-auth-heading">Web：認可とページネーション</h2>
 <h3 id="web-default-deny">例1：認可のdefault deny</h3>
-<p>公開したくないRoleとActionの組合せを明示的に拒否します。破れると、ゲストの削除やメンバーの管理操作が権限昇格として実行されます。</p>
+<p>公開したくないRoleとWebActionの組合せを明示的に拒否します。破れると、ゲストの削除やメンバーの管理操作が権限昇格として実行されます。</p>
 <div class="code-wrap" data-lang="lean">
 <div class="code-toolbar"><span class="code-language">Lean 4</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>import Mathlib
@@ -522,10 +558,10 @@ theorem place_true (b : Board) (i : Fin 9) :
 inductive Role | guest | member | admin
 deriving DecidableEq
 
-inductive Action | read | write | delete
+inductive WebAction | read | write | delete
 deriving DecidableEq
 
-def allowed : Role → Action → Bool
+def allowed : Role → WebAction → Bool
   | .guest, .read =&gt; true
   | .member, .read =&gt; true
   | .member, .write =&gt; true
@@ -582,7 +618,7 @@ theorem auth_refresh :
 </section>
 <section id="design">
 <h2 id="design-heading">証明の設計と限界</h2>
-<div class="table-wrap"><table><thead><tr><th>観察</th><th>設計への問い</th><th>次の一手</th></tr></thead><tbody><tr><td>Boolで表した</td><td>命題として証明する必要があるか</td><td>PropやDecidableを検討</td></tr><tr><td>Natでunderflowした</td><td>負の値は入力不正か状態か</td><td>Int、Option、proof-carrying型</td></tr><tr><td>単位が値の名前だけ</td><td>型で混同を禁止できるか</td><td>Meter、Secondなどのnewtype</td></tr><tr><td>casesが増えた</td><td>状態のenumを整理できるか</td><td>inductiveと遷移関数</td></tr><tr><td>Web定理は通る</td><td>全経路が同じ認可関数を使うか</td><td>PBT・統合テスト・監査</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>観察</th><th>設計への問い</th><th>次の一手</th></tr></thead><tbody><tr><td>Boolで表した</td><td>命題として証明する必要があるか</td><td>PropやDecidableを検討</td></tr><tr><td>Nat減算が0へ切り詰められた</td><td>負の値は入力不正か状態か</td><td>Int、Option、proof-carrying型</td></tr><tr><td>単位が値の名前だけ</td><td>型で混同を禁止できるか</td><td>Meter、Secondなどのnewtype</td></tr><tr><td>casesが増えた</td><td>状態のenumを整理できるか</td><td>inductiveと遷移関数</td></tr><tr><td>Web定理は通る</td><td>全経路が同じ認可関数を使うか</td><td>PBT・統合テスト・監査</td></tr></tbody></table></div>
 <p>証明が難しいとき、数学を難しくする前にAPIの不変条件を見直します。証明できないものを無理に一つのLean定義へ寄せず、TLA+の状態モデルやPBTの実装propertyへ渡す方が、保証の説明が正確になります。</p>
 <div class="code-wrap" data-lang="text">
 <div class="code-toolbar"><span class="code-language">実装境界の記録</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
@@ -628,7 +664,7 @@ PBTへ渡す:
 <h2 id="summary-heading">まとめ</h2>
 <p>数学では帰納法と代数、物理では単位と保存量、ゲームでは全域性と不変量、Webでは認可と状態を扱いました。どの例も、型・述語・補題によって「正しそう」を前提付きの主張へ変えています。</p>
 <p>Leanが扱わない外部依存を無理に隠さず、TLA+やPBTへ境界を渡します。次章では、時間・並行性・Safety・LivenessをTLA+で表します。</p>
-</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>全域性</dt><dd>定義が入力の全ケースを処理し、未定義の結果を残さない性質。</dd><dt>不変量</dt><dd>操作や遷移の前後で保持される性質。</dd><dt>単位型</dt><dd>MeterやSecondのように、同じ基礎値でも意味を型で分ける設計。</dd><dt>default deny</dt><dd>許可を列挙し、それ以外を拒否する認可設計。</dd><dt>Fin n</dt><dd>0以上n未満のインデックスを表す型。</dd><dt>underflow</dt><dd>自然数などの下限を越えたときに、意図しない値へ折り返す問題。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：単位をLeanの型で分けると、何が防げますか。</summary><div class="answer">距離と時間のように、同じ基礎型の値を誤って加算する混同を型エラーにできます。</div></details><details class="check-item"><summary>問2：`Fin 9`を盤面インデックスに使う理由は何ですか。</summary><div class="answer">0〜8の範囲を型で保証し、盤外アクセスの前提を減らすためです。</div></details><details class="check-item"><summary>問3：認可関数の定理が通っても、Web全体の認可が安全とは限らないのはなぜですか。</summary><div class="answer">キャッシュ、ミドルウェア、別経路、JWTや時計など、関数の外側があるためです。</div></details><details class="check-item"><summary>問4：物理式の代数的同値性と物理法則は何が違いますか。</summary><div class="answer">前者は定義した式の変形、後者は運動方程式や境界条件を含むモデルだからです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="01-lean-basics.html"><small>← 前の章</small><strong>01　Lean 4 基礎</strong></a><a href="03-tlaplus-basics.html"><small>次の章 →</small><strong>03　TLA+ 基礎</strong></a></nav>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>全域性</dt><dd>定義が入力の全ケースを処理し、未定義の結果を残さない性質。</dd><dt>不変量</dt><dd>操作や遷移の前後で保持される性質。</dd><dt>単位型</dt><dd>MeterやSecondのように、同じ基礎値でも意味を型で分ける設計。</dd><dt>default deny</dt><dd>許可を列挙し、それ以外を拒否する認可設計。</dd><dt>Fin n</dt><dd>0以上n未満のインデックスを表す型。</dd><dt>underflow</dt><dd>下限より小さい結果を表せない問題。Leanの`Nat`減算は0へ切り詰められ（`0 - 1 = 0`）、固定幅の符号なし整数で起こり得る最大値へのwraparoundとは挙動が異なる。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：単位をLeanの型で分けると、何が防げますか。</summary><div class="answer">距離と時間のように、同じ基礎型の値を誤って加算する混同を型エラーにできます。</div></details><details class="check-item"><summary>問2：`Fin 9`を盤面インデックスに使う理由は何ですか。</summary><div class="answer">0〜8の範囲を型で保証し、盤外アクセスの前提を減らすためです。</div></details><details class="check-item"><summary>問3：認可関数の定理が通っても、Web全体の認可が安全とは限らないのはなぜですか。</summary><div class="answer">キャッシュ、ミドルウェア、別経路、JWTや時計など、関数の外側があるためです。</div></details><details class="check-item"><summary>問4：物理式の代数的同値性と物理法則は何が違いますか。</summary><div class="answer">前者は定義した式の変形、後者は運動方程式や境界条件を含むモデルだからです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="01-lean-basics.html"><small>← 前の章</small><strong>01　Lean 4 基礎</strong></a><a href="03-tlaplus-basics.html"><small>次の章 →</small><strong>03　TLA+ 基礎</strong></a></nav>
 <a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
 </main>
 <script>

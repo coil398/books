@@ -481,7 +481,7 @@ def test_interleaving_exposes_race():
 
     assert shop.stock == -1</code></pre></div>
 </div>
-<p>本番修正後は、同じシナリオが失敗する（つまり在庫が負にならない）ことを確認します。SQLの条件付きUPDATE、行ロック、serializable transactionなど、採用したatomicityをテストの名前と設計文書に置きます。</p>
+<p>これは欠陥を再現できたときに通る、意図的に壊れたfixtureのcharacterization testです。本番修正版へは`assert shop.stock &gt;= 0`というSafetyを公開API越しに検査する別テストを移し、そのテストが緑になることを完了条件にします。SQLの条件付きUPDATE、行ロック、serializable transactionなど、採用したatomicityをテストの名前と設計文書に置きます。</p>
 <aside class="callout warning" role="note"><strong>競合fixtureを本番コードの代わりにしない</strong><p>race fixtureは欠陥を示すための最小反例です。これが通ることを品質基準にせず、修正版の公開APIとDB境界へ同じ意味のpropertyを移します。</p></aside>
 </section>
 <section id="lean-subtotal">
@@ -523,32 +523,47 @@ def boundedDiscount (amount : Nat) (rate : Percent) : Nat :=
 theorem boundedDiscount_le (amount : Nat) (rate : Percent) :
     boundedDiscount amount rate &lt;= amount := by
   unfold boundedDiscount
-  exact Nat.div_le_of_le_mul (Nat.mul_le_mul_left amount rate.bound)</code></pre></div>
+  exact Nat.div_le_of_le_mul (by
+    simpa [Nat.mul_comm] using Nat.mul_le_mul_left amount rate.bound)</code></pre></div>
 </div>
 <p>rateの範囲をvalidatorに任せる代わりに型へ埋め込むと、boundedDiscountの呼び出し側に前提が残ります。型を作る境界が本当に全API入口を覆うことは、PBT・レビューで確認します。</p>
 </section>
 <section id="lean-connection">
 <h2 id="lean-connection-heading">Leanの定理と移植実装を接続する</h2>
-<p>Leanの`subtotal`とPythonの`python_subtotal`が同じ仕様だと、名前だけでは分かりません。Python側で、Leanの定理と同じ関係をpropertyとして再実装します。これは定理の再証明ではなく、移植境界の経験的な接続証拠です。</p>
+<p>Leanの`subtotal`とPythonの`python_subtotal`が同じ仕様だと、名前だけでは分かりません。append準同型だけなら常に0を返す関数も通るため、まずLean定義の右辺に対応するPython組み込み`sum`と結果を比較し、そのうえでappendの関係も検査します。これは定理の再証明ではなく、移植境界の経験的な接続証拠です。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / port property</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
 
 
 def python_subtotal(prices: list[int]) -&gt; int:
-    return sum(prices)
+    result = 0
+    for price in prices:
+        result += price
+    return result
+
+
+nonnegative_prices = st.lists(
+    st.integers(min_value=0),
+    max_size=100,
+)
+
+
+@given(nonnegative_prices)
+def test_python_subtotal_matches_reference(prices):
+    assert python_subtotal(prices) == sum(prices)
 
 
 @given(
-    st.lists(st.integers(min_value=0), max_size=100),
-    st.lists(st.integers(min_value=0), max_size=100),
+    nonnegative_prices,
+    nonnegative_prices,
 )
 def test_python_subtotal_append(xs, ys):
     assert python_subtotal(xs + ys) == (
         python_subtotal(xs) + python_subtotal(ys)
     )</code></pre></div>
 </div>
-<div class="table-wrap"><table><thead><tr><th>Leanが固定する</th><th>PBTが接続する</th><th>まだ別途必要</th></tr></thead><tbody><tr><td>List Natの小計恒等式</td><td>Pythonのリスト・整数</td><td>固定幅・DB Decimal</td></tr><tr><td>rate&lt;=100の割引上限</td><td>API入力のgenerator</td><td>税・通貨・丸め仕様</td></tr><tr><td>型の不正状態排除</td><td>serialize/deserialize</td><td>HTTP middleware</td></tr><tr><td>純粋関数の結果</td><td>実装の観測値</td><td>ネットワーク・時計</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Leanが固定する</th><th>PBTが接続する</th><th>まだ別途必要</th></tr></thead><tbody><tr><td>List Natの小計恒等式</td><td>Python結果と`sum`参照値・append関係</td><td>固定幅・DB Decimal</td></tr><tr><td>rate&lt;=100の割引上限</td><td>API入力のgenerator</td><td>税・通貨・丸め仕様</td></tr><tr><td>型の不正状態排除</td><td>serialize/deserialize</td><td>HTTP middleware</td></tr><tr><td>純粋関数の結果</td><td>実装の観測値</td><td>ネットワーク・時計</td></tr></tbody></table></div>
 <aside class="callout danger" role="note"><strong>移植propertyを証明と呼ばない</strong><p>有限サンプルの移植確認は、Leanの全入力定理を置き換えません。逆に、Leanの定理だけではPython実装のバグを検出できません。二つを別の証拠として報告します。</p></aside>
 </section>
 <section id="scope">

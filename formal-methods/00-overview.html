@@ -364,10 +364,9 @@ structure NonEmptyPage (α : Type) where
   nonempty : items ≠ []
 
 def first {α : Type} (page : NonEmptyPage α) : α :=
-  match page.items with
-  | x :: _ =&gt; x
-  | [] =&gt; False.elim (page.nonempty rfl)</code></pre></div>
+  page.items.head page.nonempty</code></pre></div>
 </div>
+<p>`List.head`へ空リストではない証明`page.nonempty`を渡すため、到達不能な空分岐を手作業で精緻化する必要がありません。</p>
 <p>一方、DBの分離レベル、時計、ネットワーク、OSスケジューラを自動で網羅するわけではありません。これらを形式化するなら追加のモデルと仮定が必要で、しばしばTLA+やPBTの境界に置く方が費用対効果に合います。</p>
 <aside class="callout danger" role="note"><strong>Leanの定理は移植の証明ではない</strong><p>PythonやTypeScriptへ手書き移植した関数がLeanの定義と同じだと自動的に分かるわけではありません。中核関数のproperty、golden fixture、生成コードなどを接続証拠として残します。</p></aside>
 </section>

@@ -446,8 +446,9 @@ Spec == Init /\ [][Step]_vars
 curl -fL --output tools/tla2tools-1.8.0.jar \
   https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
 java -cp tools/tla2tools-1.8.0.jar tlc2.TLC \
-  -config Counter.cfg Counter.tla</code></pre></div>
+  -deadlock -config Counter.cfg Counter.tla</code></pre></div>
 </div>
+<p>`Counter`は`count = 10`を意図した終端状態とするため、ここではTLCの既定deadlock検査だけを`-deadlock`で無効にします。`[][Next]_count`が許す時間的なstutteringと、TLCが生の`Next`に後続がないと報告するdeadlockは区別します。常時稼働するサービスで停止が欠陥なら、このオプションで隠さず、待機・終了アクションをモデルへ明示します。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">Counter.cfg</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>SPECIFICATION Spec
@@ -468,7 +469,7 @@ PROPERTY Progress</code></pre></div>
 
 (* --algorithm Mutex
 variables lock = "free";
-process (P \in {"A", "B"})
+process P \in {"A", "B"}
 begin
 Acquire:
   await lock = "free";

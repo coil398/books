@@ -305,9 +305,9 @@ pre code { display: block; }
 curl -fL --output tools/tla2tools-1.8.0.jar \
   https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
 java -cp tools/tla2tools-1.8.0.jar tlc2.TLC \
-  -config Inventory.cfg Inventory.tla</code></pre></div>
+  -deadlock -config Inventory.cfg Inventory.tla</code></pre></div>
 </div>
-<p>モデルは、まず2ユーザー・容量1・短い履歴で検査します。反例を読める大きさにしてから、決済失敗、キャンセル、キャッシュ、切断を段階的に追加します。</p>
+<p>モデルは、まず2ユーザー・容量1・短い履歴で検査します。この設定では一件の購入後に在庫切れで正常終了するため、コマンドの`-deadlock`はTLCの既定deadlock検査だけを無効にします。停止が異常なモデルではこのオプションを使わず、待機や終了を`Next`へ明示します。反例を読める大きさにしてから、決済失敗、キャンセル、キャッシュ、切断を段階的に追加します。</p>
 <aside class="callout info" role="note"><strong>実例ごとの三つの問い</strong><p>何を保証したいか。なぜそれが必要か。破れると何が起きるか。コードの直前にこの三つを置くと、モデルの目的が実装の写経へ流れません。</p></aside>
 </section>
 <section id="web-inventory">
@@ -493,7 +493,7 @@ Spec == Init /\ [][Next]_&lt;&lt;turn, moves&gt;&gt;
 </section>
 <section id="game-match">
 <h2 id="game-match-heading">ゲーム例2：マッチングの進行</h2>
-<p>二人が待っているなら、いつかペアになるというLivenessを考えます。Safetyだけなら「待ち集合が壊れない」しか分かりません。公平性なしでは、Joinばかり選ばれてPairが永遠に選ばれない反例があり得ます。</p>
+<p>二人が待っているなら、いつかペアになるというLivenessを考えます。Safetyだけなら「待ち集合が壊れない」しか分かりません。有限の`Players`では各プレイヤーの`Join`は一度しか有効にならないため、`Join`だけを無限に選ぶ実行はありません。公平性なしで残る反例は、二人が待った後に`Spec`が許すstutteringを永遠に続け、`Pair`を一度も選ばない実行です。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Match ----
@@ -583,7 +583,7 @@ CONSTANT InitialInventory &lt;- InitialInventoryModel</code></pre></div>
 
 (* --algorithm Mutex
 variables lock = "free";
-process (P \in {"A", "B"})
+process P \in {"A", "B"}
 begin
 Acquire:
   await lock = "free";
@@ -674,11 +674,11 @@ Spec == Init /\ [][Next]_resource
 <p>総量保存は一ステップの代数で説明できますが、マイナス禁止、上限、同時移動の公平性は別の性質です。ここでの`Sum`は関数の定義域を走査する自作演算子なので、同じ資源量を持つエージェントもそれぞれ合計できます。どの不変量を「主」とし、どれを補助にするかを命名します。</p>
 </section>
 <section id="physics-round">
-<h2 id="physics-round-heading">物理・数学例3：ラウンドロビンの公平性</h2>
-<p>相互排除と順番の進行を一つのモデルで考えます。`Proc`はプロセスの集合とし、初期プロセスと次要素を返す関数を定数で与えます。実際のモデルでは、空集合や切断も扱います。</p>
+<h2 id="physics-round-heading">物理・数学例3：後続関数を使う相互排除</h2>
+<p>相互排除と、後続関数に従う手番更新を一つのモデルで考えます。`Proc`はプロセスの集合とし、初期プロセスと次要素を返す全域関数を定数で与えます。この仮定だけでは自己ループや一部だけの循環も許すため、全プロセスを巡回するラウンドロビンや公平性はまだ主張しません。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>---- MODULE RoundRobin ----
+<div class="code-scroll"><pre class="code-block"><code>---- MODULE SuccessorMutex ----
 EXTENDS FiniteSets, Naturals
 
 CONSTANT Proc, InitialProc, NextProc
@@ -702,7 +702,7 @@ Next == \E p \in Proc : Enter(p) \/ Leave(p)
 Spec == Init /\ [][Next]_&lt;&lt;turn, inCS&gt;&gt;
 ==============================================</code></pre></div>
 </div>
-<p>次のturnへ進むアクション、接続中のプロセス、待ち時間の上限を追加するとLivenessを検査できます。モデルで表していないインデックス操作を「完全なTLA+コード」と誤認させないため、教育用の範囲を明記します。</p>
+<p>このモデルが検査する中心は`MutualExclusion`です。ラウンドロビンを主張するには、`NextProc`が`Proc`全体を一巡することを仮定または具体的な有限モデルで固定し、`Enter`と`Leave`の公平性、および各プロセスへいつか手番が来るLivenessを追加します。切断や待ち時間の上限も、その段階で別の状態として扱います。</p>
 <aside class="callout info" role="note"><strong>動かない断片を混ぜない</strong><p>実際にTLCへ渡すファイルには、EXTENDS、定数、Init、Next、Spec、検査対象を揃えます。疑似コードを示す場合は、どの部分が未実装かをラベルで明記します。</p></aside>
 </section>
 <section id="boundary">
