@@ -19,6 +19,14 @@ open index.html
 | [形式手法とテスト技法](./formal-methods/) | Lean 4 / TLA+ / PlusCal / Property-Based Testing。全 8 章 |
 | [Pi SDK と LangChain](./pi-sdk-langchain/) | Pi SDK / LangChain / LangGraph / エージェントループ / 実装・選定・運用。全 8 章 |
 
+## レポート
+
+書籍そのものではなく、作り方・検証方法についての記録。
+
+| レポート | 内容 |
+|---|---|
+| [LLM にツールを実行させるかどうかが分水嶺](./reports/model-comparison.md) | GPT-5.6 系 3 モデル × 3 effort = 9 セルで同じ教科書をレビューさせ、処理系（SANY / TLC）が確定させた欠陥の検出率を比較した記録 |
+
 ## 作りの方針
 
 - **1 冊 1 ディレクトリ**。`<book>/index.html` が目次、以降が各章
