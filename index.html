@@ -6,147 +6,29 @@
 <title>books — 技術書の書棚</title>
 <meta name="description" content="自作の技術書・教科書を置いている書棚。">
 <style>
-  :root {
-    --bg: #fbfaf8;
-    --surface: #ffffff;
-    --border: #e3ded6;
-    --text: #22201d;
-    --muted: #6b655c;
-    --accent: #8a5a2b;
-    --accent-soft: #f4ece2;
-    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #16151a;
-      --surface: #1e1d24;
-      --border: #322f3a;
-      --text: #e8e5e0;
-      --muted: #9d968c;
-      --accent: #d4a373;
-      --accent-soft: #2a2530;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
-    }
-  }
-  :root[data-theme="light"] {
-    --bg: #fbfaf8; --surface: #ffffff; --border: #e3ded6; --text: #22201d;
-    --muted: #6b655c; --accent: #8a5a2b; --accent-soft: #f4ece2;
-    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
-  }
-  :root[data-theme="dark"] {
-    --bg: #16151a; --surface: #1e1d24; --border: #322f3a; --text: #e8e5e0;
-    --muted: #9d968c; --accent: #d4a373; --accent-soft: #2a2530;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", sans-serif;
-    line-height: 1.8;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 46rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
-
-  header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-  h1 { font-size: 2.4rem; letter-spacing: .02em; margin: 0 0 .2rem; }
-  .tagline { color: var(--muted); margin: 0 0 3rem; font-size: .95rem; }
-
-  #theme {
-    background: var(--surface); color: var(--muted);
-    border: 1px solid var(--border); border-radius: 999px;
-    padding: .35rem .9rem; font: inherit; font-size: .8rem;
-    cursor: pointer; white-space: nowrap;
-  }
-  #theme:hover { color: var(--text); border-color: var(--accent); }
-  #theme:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  h2 {
-    font-size: .78rem; text-transform: uppercase; letter-spacing: .14em;
-    color: var(--muted); font-weight: 600;
-    margin: 0 0 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--border);
-  }
-
-  .book {
-    display: block; text-decoration: none; color: inherit;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 1.6rem 1.7rem; margin-bottom: 1rem;
-    box-shadow: var(--shadow);
-    transition: border-color .15s ease, transform .15s ease;
-  }
-  .book:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .book:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .book h3 { margin: 0 0 .4rem; font-size: 1.3rem; }
-  .book p { margin: 0 0 1rem; color: var(--muted); font-size: .95rem; }
-
-  .tags { display: flex; flex-wrap: wrap; gap: .4rem; }
-  .tag {
-    background: var(--accent-soft); color: var(--accent);
-    border-radius: 999px; padding: .15rem .7rem;
-    font-size: .75rem; font-weight: 600; letter-spacing: .03em;
-  }
-
-  footer {
-    margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
-    color: var(--muted); font-size: .85rem;
-  }
-  footer a { color: var(--accent); }
-
-  @media (max-width: 480px) {
-    .wrap { padding: 2.5rem 1.1rem 4rem; }
-    h1 { font-size: 1.9rem; }
-  }
+  :root { --bg:#fbfaf8; --surface:#fff; --border:#e3ded6; --text:#22201d; --muted:#6b655c; --accent:#8a5a2b; --accent-soft:#f4ece2; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05); }
+  @media (prefers-color-scheme:dark){:root{--bg:#16151a;--surface:#1e1d24;--border:#322f3a;--text:#e8e5e0;--muted:#9d968c;--accent:#d4a373;--accent-soft:#2a2530;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35)}}
+  :root[data-theme="light"]{--bg:#fbfaf8;--surface:#fff;--border:#e3ded6;--text:#22201d;--muted:#6b655c;--accent:#8a5a2b;--accent-soft:#f4ece2;--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+  :root[data-theme="dark"]{--bg:#16151a;--surface:#1e1d24;--border:#322f3a;--text:#e8e5e0;--muted:#9d968c;--accent:#d4a373;--accent-soft:#2a2530;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35)}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Segoe UI",sans-serif;line-height:1.8;-webkit-font-smoothing:antialiased}.wrap{max-width:46rem;margin:0 auto;padding:4rem 1.5rem 6rem}header{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap}h1{font-size:2.4rem;letter-spacing:.02em;margin:0 0 .2rem}.tagline{color:var(--muted);margin:0 0 3rem;font-size:.95rem}#theme{background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:.35rem .9rem;font:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap}#theme:hover{color:var(--text);border-color:var(--accent)}#theme:focus-visible{outline:2px solid var(--accent);outline-offset:2px}h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600;margin:0 0 1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}.book{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.6rem 1.7rem;margin-bottom:1rem;box-shadow:var(--shadow);transition:border-color .15s ease,transform .15s ease}.book:hover{border-color:var(--accent);transform:translateY(-2px)}.book:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.book h3{margin:0 0 .4rem;font-size:1.3rem}.book p{margin:0 0 1rem;color:var(--muted);font-size:.95rem}.tags{display:flex;flex-wrap:wrap;gap:.4rem}.tag{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:.15rem .7rem;font-size:.75rem;font-weight:600;letter-spacing:.03em}footer{margin-top:4rem;padding-top:1.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:.85rem}footer a{color:var(--accent)}@media(max-width:480px){.wrap{padding:2.5rem 1.1rem 4rem}h1{font-size:1.9rem}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div>
-      <h1>books</h1>
-    </div>
-    <button id="theme" type="button" aria-label="配色テーマを切り替える">テーマ切替</button>
-  </header>
+  <header><div><h1>books</h1></div><button id="theme" type="button" aria-label="配色テーマを切り替える">テーマ切替</button></header>
   <p class="tagline">技術書・教科書の書棚。ブラウザでそのまま読める。</p>
-
   <h2>蔵書</h2>
-
   <a class="book" href="./formal-methods/">
     <h3>形式手法とテスト技法</h3>
     <p>「バグを見つける」と「バグが無いことを証明する」の違いから始めて、定理証明・モデル検査・性質ベーステストを実際のコードで学ぶ。サンプルはウェブアプリケーション・数学・物理学・ゲームの 4 領域から。全 8 章。</p>
-    <div class="tags">
-      <span class="tag">Lean 4</span>
-      <span class="tag">TLA+</span>
-      <span class="tag">PlusCal</span>
-      <span class="tag">Property-Based Testing</span>
-    </div>
+    <div class="tags"><span class="tag">Lean 4</span><span class="tag">TLA+</span><span class="tag">PlusCal</span><span class="tag">Property-Based Testing</span></div>
   </a>
-
-  <footer>
-    ソース: <a href="https://github.com/coil398/books">github.com/coil398/books</a>
-  </footer>
+  <a class="book" href="./pi-sdk-langchain/">
+    <h3>Pi SDK と LangChain</h3>
+    <p>Pi SDK、LangChain、LangGraphを、エージェントループ・モデル統合・状態管理・運用の各層から比較する。実装パターン、PoC、移行、セキュリティ、選定規則まで扱う。全 8 章。</p>
+    <div class="tags"><span class="tag">Pi SDK</span><span class="tag">LangChain</span><span class="tag">LangGraph</span><span class="tag">AI Agents</span></div>
+  </a>
+  <footer>ソース: <a href="https://github.com/coil398/books">github.com/coil398/books</a></footer>
 </div>
-
-<script>
-(function () {
-  var root = document.documentElement;
-  var btn = document.getElementById('theme');
-  var saved = null;
-  try { saved = localStorage.getItem('books-theme'); } catch (e) {}
-  if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
-
-  btn.addEventListener('click', function () {
-    var current = root.getAttribute('data-theme');
-    if (!current) {
-      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      current = prefersDark ? 'dark' : 'light';
-    }
-    var next = current === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    try { localStorage.setItem('books-theme', next); } catch (e) {}
-  });
-})();
-</script>
-</body>
-</html>
+<script>(function(){var root=document.documentElement,btn=document.getElementById('theme'),saved=null;try{saved=localStorage.getItem('books-theme')}catch(e){}if(saved==='light'||saved==='dark')root.setAttribute('data-theme',saved);btn.addEventListener('click',function(){var current=root.getAttribute('data-theme');if(!current){current=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}var next=current==='dark'?'light':'dark';root.setAttribute('data-theme',next);try{localStorage.setItem('books-theme',next)}catch(e){}})})();</script>
+</body></html>
