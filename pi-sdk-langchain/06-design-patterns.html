@@ -1,0 +1,86 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="同じ業務要件をPi SDK、LangChain、LangGraphで実装する"><title>実装パターン | Pi SDK と LangChain</title><style>:root{--bg:#f7f8f5;--s:#fff;--s2:#eef2ed;--ink:#25312d;--muted:#5d6c65;--line:#d3ddd5;--a:#236b5a;--a2:#174e42;--soft:#d9eee6;--link:#155e9a;--code:#202c2a;--codeink:#e8f2eb;--side:18rem;--w:78ch;font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;line-height:1.85;color-scheme:light}@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#18211f;--s:#202b28;--s2:#263632;--ink:#e7eee9;--muted:#b6c7bf;--line:#40544d;--a:#7ad0b2;--a2:#a1e5ca;--soft:#24473e;--link:#8dcaff;--code:#101817;--codeink:#e5f1eb;color-scheme:dark}}:root[data-theme=dark]{--bg:#18211f;--s:#202b28;--s2:#263632;--ink:#e7eee9;--muted:#b6c7bf;--line:#40544d;--a:#7ad0b2;--a2:#a1e5ca;--soft:#24473e;--link:#8dcaff;--code:#101817;--codeink:#e5f1eb;color-scheme:dark}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:2rem}body{margin:0;background:var(--bg);color:var(--ink)}a{color:var(--link)}.theme{position:fixed;z-index:40;right:1rem;top:1rem;padding:.45rem .8rem;border:1px solid var(--line);border-radius:999px;background:var(--s);color:var(--ink)}.menu{display:none;position:fixed;z-index:40;left:1rem;top:1rem;width:2.8rem;height:2.8rem;border:1px solid var(--line);border-radius:.7rem;background:var(--s);color:var(--ink)}aside{position:fixed;inset:0 auto 0 0;width:var(--side);overflow:auto;padding:1.25rem 1rem;border-right:1px solid var(--line);background:var(--s);z-index:30}.brand{display:block;margin:.2rem .5rem 1rem;color:var(--ink);font-weight:800;text-decoration:none}.brand small{display:block;color:var(--muted);font-size:.72rem;font-weight:500}.label{margin:1rem .5rem .35rem;color:var(--muted);font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.nav{display:grid;gap:.16rem}.nav a{padding:.4rem .5rem;border-left:3px solid transparent;border-radius:0 .4rem .4rem 0;color:var(--muted);font-size:.82rem;text-decoration:none}.nav a:hover,.nav .on{border-left-color:var(--a);background:var(--soft);color:var(--a2)}main{width:min(var(--w),calc(100% - 2rem));margin-left:calc(var(--side) + max(2rem,(100vw - var(--side) - var(--w))/2));padding:4.5rem 0 5rem}h1,h2,h3{line-height:1.35;text-wrap:balance}h1{font-size:clamp(2.1rem,5vw,3.3rem);letter-spacing:-.035em;margin:.2rem 0 1rem}h2{font-size:clamp(1.45rem,3vw,2rem);margin:3.3rem 0 1rem;padding-top:.3rem;border-top:1px solid var(--line)}h3{margin:2rem 0 .6rem}.eyebrow{color:var(--a);font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.lead{color:var(--muted);font-size:1.08rem}.meta,.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:1.2rem 0 2rem}.card{padding:1rem;border:1px solid var(--line);border-radius:.8rem;background:var(--s)}.card strong{display:block;color:var(--a2);font-size:.8rem}.card p,.card li,.card span{color:var(--muted);font-size:.88rem}.call{margin:1.3rem 0;padding:1rem 1.15rem;border-left:5px solid var(--a);border-radius:.2rem .8rem .8rem .2rem;background:var(--soft)}.warn{border-color:#b27a17;background:#fff3d8;color:#35280f}.table{overflow:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:.7rem;background:var(--s)}table{width:100%;min-width:46rem;border-collapse:collapse;font-size:.88rem}th,td{padding:.7rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--s2);color:var(--a2)}pre{margin:0;padding:1rem;overflow:auto;background:var(--code);color:var(--codeink);font:.84rem/1.65 Consolas,monospace}.code{margin:1.3rem 0;border-radius:.8rem;overflow:hidden}.bar{display:flex;justify-content:space-between;padding:.4rem .8rem;background:#30413d;color:#d5e6dc;font-size:.75rem}.copy{background:transparent;color:inherit;border:1px solid #81998d;border-radius:.4rem}.quiz{margin:1rem 0;border:1px solid var(--line);border-radius:.7rem;background:var(--s)}.quiz summary{padding:.8rem 1rem;font-weight:800;cursor:pointer}.answer{padding:0 1rem 1rem;color:var(--muted)}.next{display:flex;justify-content:space-between;gap:1rem;margin-top:4rem;padding-top:1.4rem;border-top:1px solid var(--line)}.next a{padding:.8rem 1rem;border:1px solid var(--line);border-radius:.7rem;background:var(--s);text-decoration:none}@media(max-width:980px){.menu{display:block}aside{transform:translateX(-105%);transition:.2s}aside.open{transform:none}main{margin:0 auto;padding-top:5rem}}@media(max-width:700px){.meta,.grid{grid-template-columns:1fr}}</style></head><body><button class="menu">☰</button><button id="theme" class="theme">テーマ切替</button><aside><a class="brand" href="./index.html">Pi SDK と LangChain<small>エージェント基盤の設計と選択</small></a><div class="label">Chapters</div><nav class="nav"><a href="./00-overview.html">0. 全体像</a><a href="./01-agent-loop.html">1. エージェントループの解剖</a><a href="./02-pi-sdk.html">2. Pi SDK</a><a href="./03-langchain.html">3. LangChain</a><a href="./04-langgraph.html">4. LangGraph</a><a href="./05-head-to-head.html">5. 正面比較</a><a class="on" href="./06-design-patterns.html">6. 実装パターン</a><a href="./07-selection.html">7. 選定と運用</a></nav><div class="label">On this page</div><nav class="nav"><a href="#requirements">共通要件</a><a href="#pi">Pi SDK版</a><a href="#lc">LangChain版</a><a href="#lg">LangGraph版</a><a href="#worker">Worker隔離</a><a href="#artifacts">Artifact契約</a><a href="#testing">テスト</a><a href="#antipatterns">反パターン</a></nav></aside><main><header><p class="eyebrow">Chapter 6</p><h1>実装パターン</h1><p class="lead">同じ文書レビュー業務をPi SDK、LangChain、LangGraphで組み、責務差をコードに落とす。</p><div class="meta"><div class="card"><strong>読了目安</strong><span>45–60分</span></div><div class="card"><strong>難易度</strong><span>上級</span></div><div class="card"><strong>基準日</strong><span>2026-08-01</span></div></div></header><section id="requirements"><h2>共通要件</h2><p>題材は規程文書レビューとする。入力文書とpolicyを読み、issue一覧とverdictを構造化出力する。filesystem全体、shell、任意networkは使用しない。</p><div class="table"><table><thead><tr><th>要件</th><th>契約</th></tr></thead><tbody><tr><td>入力</td><td>documentId、policyId</td></tr><tr><td>tools</td><td>read_input、write_review、submit_result</td></tr><tr><td>出力</td><td>ReviewResult schema</td></tr><tr><td>完了</td><td>submit_result成功かつartifact検証成功</td></tr><tr><td>失敗</td><td>未宣言tool、schema違反、期限超過、model不一致</td></tr><tr><td>禁止</td><td>暗黙fallback、自動model選択、未検証publish</td></tr></tbody></table></div><div class="code"><div class="bar"><b>TypeScript</b><button class="copy">コピー</button></div><pre><code>const ReviewResult = z.object({
+  verdict: z.enum(["PASS", "FAIL"]),
+  issues: z.array(z.object({
+    severity: z.enum(["critical", "medium", "low"]),
+    location: z.string(),
+    message: z.string(),
+  })),
+});</code></pre></div></section><section id="pi"><h2>パターンA: Pi SDKを薄いworkerとして使う</h2><p>host applicationがartifact、timeout、credential、publishを所有し、Piは一回のmodel-tool loopだけを実行する。</p><div class="code"><div class="bar"><b>TypeScript</b><button class="copy">コピー</button></div><pre><code>async function runPiReview(request: ReviewRequest) {
+  const workspace = await stageDeclaredInputs(request);
+  const model = getExactModel("provider", "model-id");
+  const tools = createArtifactTools(workspace, request);
+
+  const { session } = await createAgentSession({
+    model,
+    thinkingLevel: "high",
+    customTools: tools,
+    sessionManager: SessionManager.inMemory(),
+    resourceLoader: emptyLoader,
+  });
+
+  assertExactRuntime(session, {
+    modelId: "model-id",
+    tools: ["read_input", "submit_result", "write_review"],
+  });
+
+  const events = collectPiEvents(session);
+  await withDeadline(() =&gt; session.prompt(buildPrompt(request)));
+  await session.agent.waitForIdle();
+
+  const submitted = requireSubmittedResult(events);
+  ReviewResult.parse(submitted);
+  await validateStagedArtifacts(workspace);
+  return atomicPublish(workspace);
+}</code></pre></div><p>この構成では業務の正本はhostにある。Pi sessionをresumeしない。再試行は新attemptとしてhostが作る。</p><h3>向く条件</h3><ul><li>既存applicationにworkflow/stateがある。</li><li>model/tool/promptを完全固定する。</li><li>一回のtaskが短命。</li><li>observabilityを自前基盤へ統合する。</li></ul></section><section id="lc"><h2>パターンB: LangChain agentとして構築する</h2><p>model integration、tool schema、structured output、middlewareをLangChainへ任せる。</p><div class="code"><div class="bar"><b>TypeScript</b><button class="copy">コピー</button></div><pre><code>const authMiddleware = createMiddleware({
+  name: "artifact-authorization",
+  wrapToolCall: async (request, handler) =&gt; {
+    assertAllowedArtifact(request.toolCall.args.artifactId);
+    return handler(request);
+  },
+});
+
+const reviewer = createAgent({
+  model: exactModel,
+  tools: [readInput, writeReview],
+  responseFormat: ReviewResult,
+  systemPrompt: REVIEW_PROMPT,
+  middleware: [authMiddleware, auditMiddleware],
+});
+
+const result = await reviewer.invoke({
+  messages: [{ role: "user", content: task }],
+});
+const review = ReviewResult.parse(result.structuredResponse);</code></pre></div><p>構造化出力が最終responseでよい場合は短い。成果物fileの書込を完了条件にするなら専用submit toolまたはagent終了後のapplication validationを追加する。</p><h3>向く条件</h3><ul><li>複数providerを比較する。</li><li>typed responseが主成果物。</li><li>middlewareを横断再利用する。</li><li>LangSmithでtrace/evaluationする。</li></ul></section><section id="lg"><h2>パターンC: LangGraphで工程を分離する</h2><p>調査、レビュー、機械検証、承認、公開を別nodeへ分け、各nodeの入力・出力をstateへ保存する。</p><div class="code"><div class="bar"><b>TypeScript</b><button class="copy">コピー</button></div><pre><code>const ReviewState = Annotation.Root({
+  documentId: Annotation&lt;string&gt;(),
+  sourceHash: Annotation&lt;string&gt;(),
+  draftReview: Annotation&lt;ReviewResult | null&gt;(),
+  validation: Annotation&lt;ValidationReceipt | null&gt;(),
+  approved: Annotation&lt;boolean&gt;(),
+});
+
+const graph = new StateGraph(ReviewState)
+  .addNode("load", loadAndPinSource)
+  .addNode("review", runReviewAgent)
+  .addNode("validate", validateReview)
+  .addNode("approve", humanApproval)
+  .addNode("publish", idempotentPublish)
+  .addEdge(START, "load")
+  .addEdge("load", "review")
+  .addEdge("review", "validate")
+  .addConditionalEdges("validate", s =&gt;
+    s.validation?.ok ? "approve" : "review")
+  .addConditionalEdges("approve", s =&gt;
+    s.approved ? "publish" : END)
+  .addEdge("publish", END)
+  .compile({ checkpointer });</code></pre></div><p>agentはreview nodeの内部に置く。graph自体に全判断をLLM化しない。hash計算、schema validation、publishは決定論的nodeにする。</p><h3>向く条件</h3><ul><li>工程が複数あり差し戻しがある。</li><li>人間承認が数時間以上続く。</li><li>process再起動から再開する。</li><li>各工程のprovenanceを残す。</li></ul></section><section id="worker"><h2>Worker process隔離</h2><p>SDKを同一processへ埋め込むとtool、extension、provider adapterの例外とmemory leakがhostへ波及する。productionでは専用worker processを使う価値がある。</p><div class="table"><table><thead><tr><th>境界</th><th>Parent</th><th>Worker</th></tr></thead><tbody><tr><td>credential</td><td>必要keyだけallowlist</td><td>in-memoryで使用</td></tr><tr><td>filesystem</td><td>stagingを作成</td><td>stagingだけ参照</td></tr><tr><td>timeout</td><td>process kill</td><td>AbortSignalを受ける</td></tr><tr><td>protocol</td><td>strict JSON検証</td><td>stdoutへ単一envelope</td></tr><tr><td>publish</td><td>検証後にatomic publish</td><td>直接publishしない</td></tr></tbody></table></div><p>LangChainもPiも同じworker patternを使える。framework選択とprocess boundaryは別の設計判断である。</p></section><section id="artifacts"><h2>Artifact契約</h2><p>会話履歴ではなく型付きartifactで工程を接続する。</p><div class="code"><div class="bar"><b>JSON</b><button class="copy">コピー</button></div><pre><code>{
+  "artifactId": "review-result",
+  "schemaId": "review-result/v1",
+  "path": "staging/review.json",
+  "contentHash": "sha256:...",
+  "inputHashes": ["sha256:...", "sha256:..."],
+  "producer": {
+    "runtime": "pi-sdk",
+    "model": "exact-model-id",
+    "attemptId": "attempt-17"
+  }
+}</code></pre></div><p>artifactがあれば、modelを変えても工程境界を維持できる。resume時は現在の入力hash、schema、runtime profileが一致する場合だけ再利用する。</p></section><section id="testing"><h2>テスト戦略</h2><div class="table"><table><thead><tr><th>テスト</th><th>内容</th></tr></thead><tbody><tr><td>Contract</td><td>tool input/output、artifact schema</td></tr><tr><td>Runtime identity</td><td>provider/model/tool集合の完全一致</td></tr><tr><td>Mutation</td><td>余計なtool、model差替、path escapeを検出</td></tr><tr><td>Failure</td><td>timeout、cancel、rate limit、malformed output</td></tr><tr><td>Idempotency</td><td>同一publish keyで二重副作用なし</td></tr><tr><td>Golden</td><td>固定inputに対する構造・重要論点</td></tr><tr><td>Evaluation</td><td>実データ集合で品質・費用・latency</td></tr></tbody></table></div><p>LLM出力全文の完全一致testは脆い。必要論点、schema、禁止操作、tool trace、費用上限を検査する。</p></section><section id="antipatterns"><h2>反パターン</h2><ol><li><strong>巨大agent一体化</strong> — 収集、判断、公開を一sessionへ入れる。</li><li><strong>promptだけの権限制御</strong> — toolを渡したまま「使うな」と書く。</li><li><strong>silent fallback</strong> — model失敗時に別modelへ自動切替する。</li><li><strong>sessionを業務DB化</strong> — durable stateと会話履歴を混同する。</li><li><strong>未検証publish</strong> — modelの最終文をそのまま本番へ書く。</li><li><strong>全例外retry</strong> — credential欠落やunknown dispatchまで再試行する。</li><li><strong>framework二重化</strong> — 既存workflow engineの上へ別graphを無目的に重ねる。</li></ol><div class="call warn"><strong>設計原則</strong><p>LLMに任せるのは意味判断。identity、schema、hash、path、retry、publishは決定論的コードで管理する。</p></div></section><section><h2>理解度チェック</h2><details class="quiz"><summary>Pi SDK版でhostが所有すべきものは何か。</summary><div class="answer">artifact、credential、timeout、runtime identity、validation、publish、attempt。</div></details><details class="quiz"><summary>LangGraph node内にagentを置く利点は何か。</summary><div class="answer">model-tool反復とworkflow state transitionを分離できる。</div></details><details class="quiz"><summary>artifactを会話履歴より優先する理由は何か。</summary><div class="answer">schema、hash、producer、input lineageを機械検証できるため。</div></details></section><nav class="next"><a href="./05-head-to-head.html">← 正面比較</a><a href="./07-selection.html">選定と運用 →</a></nav></main><script>(function(){var r=document.documentElement,t=document.getElementById('theme'),a=document.querySelector('aside'),m=document.querySelector('.menu');var s=localStorage.getItem('books-theme');if(s)r.dataset.theme=s;function c(){return r.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}t.onclick=function(){r.dataset.theme=c()==='dark'?'light':'dark';localStorage.setItem('books-theme',r.dataset.theme)};m.onclick=function(){a.classList.toggle('open')};document.querySelectorAll('.copy').forEach(function(b){b.onclick=function(){navigator.clipboard.writeText(b.closest('.code').querySelector('pre').innerText);b.textContent='コピー済み';setTimeout(function(){b.textContent='コピー'},1000)}})})();</script></body></html>
