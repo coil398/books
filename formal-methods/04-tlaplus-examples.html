@@ -301,7 +301,10 @@ pre code { display: block; }
 <p>この章では、Web、ゲーム、物理・数学の状態をTLA+でモデル化します。<dfn>抽象化</dfn>とは、失敗モードに必要な状態だけを残して、実サービス全体を小さなモデルへ縮約することです。縮約したものと落としたものを毎回明記してください。</p>
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>java -cp tla2tools.jar tlc2.TLC \
+<div class="code-scroll"><pre class="code-block"><code>mkdir -p tools
+curl -fL --output tools/tla2tools-1.8.0.jar \
+  https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
+java -cp tools/tla2tools-1.8.0.jar tlc2.TLC \
   -config Inventory.cfg Inventory.tla</code></pre></div>
 </div>
 <p>モデルは、まず2ユーザー・容量1・短い履歴で検査します。反例を読める大きさにしてから、決済失敗、キャンセル、キャッシュ、切断を段階的に追加します。</p>
@@ -313,31 +316,37 @@ pre code { display: block; }
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Inventory ----
+EXTENDS Naturals, FiniteSets
+
 CONSTANT Users, InitialStock
-VARIABLE stock, orders
+VARIABLE stock, orders, purchaseCount
 
 Init == /\ stock = InitialStock
         /\ orders = [u \in Users |-&gt; "none"]
+        /\ purchaseCount = [u \in Users |-&gt; 0]
 
 Purchase(u) == /\ orders[u] = "none"
                 /\ stock &gt; 0
                 /\ stock' = stock - 1
                 /\ orders' = [orders EXCEPT ![u] = "paid"]
+                /\ purchaseCount' = [purchaseCount EXCEPT ![u] = @ + 1]
 
 Next == \E u \in Users : Purchase(u)
 
 TypeOK == /\ stock \in Nat
           /\ orders \in [Users -&gt; {"none", "paid"}]
+          /\ purchaseCount \in [Users -&gt; Nat]
 
-NoDouble == \A u \in Users : orders[u] = "none" \/ orders[u] = "paid"
+NoDouble == \A u \in Users : purchaseCount[u] &lt;= 1
 Conserve == stock + Cardinality({u \in Users : orders[u] = "paid"}) = InitialStock
 
-Spec == Init /\ [][Next]_&lt;&lt;stock, orders&gt;&gt;
+Spec == Init /\ [][Next]_&lt;&lt;stock, orders, purchaseCount&gt;&gt;
 ========================================</code></pre></div>
 </div>
 <div class="code-wrap" data-lang="tla">
-<div class="code-toolbar"><span class="code-language">TLC設定</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users = {"alice", "bob"}
+<div class="code-toolbar"><span class="code-language">Inventory.cfg</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>SPECIFICATION Spec
+CONSTANT Users = {"alice", "bob"}
 CONSTANT InitialStock = 1
 INVARIANT TypeOK
 INVARIANT NoDouble
@@ -353,22 +362,24 @@ INVARIANT Conserve</code></pre></div>
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Session ----
 CONSTANT Tokens
-VARIABLE status
+VARIABLE status, everRevoked
 
-Init == status = [t \in Tokens |-&gt; "valid"]
+Init == /\ status = [t \in Tokens |-&gt; "valid"]
+        /\ everRevoked = {}
 
 Revoke(t) == /\ status[t] = "valid"
              /\ status' = [status EXCEPT ![t] = "revoked"]
+             /\ everRevoked' = everRevoked \cup {t}
 
 Use(t) == /\ status[t] = "valid"
-          /\ UNCHANGED status
+          /\ UNCHANGED &lt;&lt;status, everRevoked&gt;&gt;
 
 Next == \E t \in Tokens : Revoke(t) \/ Use(t)
-TypeOK == status \in [Tokens -&gt; {"valid", "revoked"}]
-RevokedNeverValid == \A t \in Tokens :
-  status[t] = "revoked" =&gt; status[t] # "valid"
+TypeOK == /\ status \in [Tokens -&gt; {"valid", "revoked"}]
+          /\ everRevoked \subseteq Tokens
+RevokedNeverValid == \A t \in everRevoked : status[t] # "valid"
 
-Spec == Init /\ [][Next]_status
+Spec == Init /\ [][Next]_&lt;&lt;status, everRevoked&gt;&gt;
 ================================</code></pre></div>
 </div>
 <p>`Use`を成功・失敗の観測変数として持ちたいなら、監査ログや応答状態を追加します。キャッシュ層が古い値を返す場合、`cache`を別変数にして、stale readを許す仕様と禁止する仕様を比較します。</p>
@@ -380,6 +391,8 @@ Spec == Init /\ [][Next]_status
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Idempotency ----
+EXTENDS Naturals, FiniteSets
+
 CONSTANT Keys
 VARIABLE applied, balance
 
@@ -417,10 +430,13 @@ Apply(k, payload) == /\ k \notin DOMAIN applied
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Cache ----
-CONSTANT Values
+EXTENDS Naturals
+
+CONSTANT Values, InitialValue
+ASSUME InitialValue \in Values
 VARIABLE origin, cache, version
 
-Init == /\ origin = Values[1]
+Init == /\ origin = InitialValue
         /\ cache = origin
         /\ version = 0
 
@@ -429,18 +445,18 @@ Read == /\ cache' = cache
 
 Write(v) == /\ v \in Values
             /\ origin' = v
-            /\ cache' = v
+            /\ UNCHANGED cache
             /\ version' = version + 1
 
-StaleRead == /\ cache' = cache
-             /\ UNCHANGED &lt;&lt;origin, version&gt;&gt;
+Refresh == /\ cache' = origin
+          /\ UNCHANGED &lt;&lt;origin, version&gt;&gt;
 
-Next == Read \/ (\E v \in Values : Write(v)) \/ StaleRead
+Next == Read \/ (\E v \in Values : Write(v)) \/ Refresh
 Coherent == cache = origin
 Spec == Init /\ [][Next]_&lt;&lt;origin, cache, version&gt;&gt;
 ===============================================</code></pre></div>
 </div>
-<p>`StaleRead`を許せば`Coherent`は違反します。それがバグなのかeventual consistencyの契約なのかは、利用者が観測できる古さ、更新後の読み取り、無効化失敗の仕様で決まります。</p>
+<p>`Write`はoriginだけを更新するため、直後は`cache`が古くなり`Coherent`に違反できます。`Refresh`がoriginをcacheへ反映すると一致に戻ります。これが許されるeventual consistencyなのか、禁止すべきstale readなのかは、利用者が観測できる古さ、更新後の読み取り、無効化失敗の仕様で決まります。</p>
 <aside class="callout info" role="note"><strong>抽象化の効き目</strong><p>キャッシュを値一つにしたモデルはTTL・容量・ネットワークを表しませんが、読み書きの順序と「最新版」の定義をレビューできます。失った細部はPBTのfake clockや統合テストへ渡します。</p></aside>
 </section>
 <section id="game-turn">
@@ -449,17 +465,23 @@ Spec == Init /\ [][Next]_&lt;&lt;origin, cache, version&gt;&gt;
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Turns ----
-CONSTANT Players
+EXTENDS Naturals
+
+CONSTANT Players, InitialPlayer, OtherPlayer
+ASSUME /\ InitialPlayer \in Players
+       /\ OtherPlayer \in Players
+       /\ InitialPlayer # OtherPlayer
+       /\ Players = {InitialPlayer, OtherPlayer}
 VARIABLE turn, moves
 
-Init == /\ turn = Players[1]
+Init == /\ turn = InitialPlayer
         /\ moves = 0
 
 Play(p) == /\ p = turn
            /\ moves' = moves + 1
-           /\ turn' = IF turn = Players[1]
-                      THEN Players[2]
-                      ELSE Players[1]
+           /\ turn' = IF turn = InitialPlayer
+                      THEN OtherPlayer
+                      ELSE InitialPlayer
 
 TypeOK == /\ turn \in Players
           /\ moves \in Nat
@@ -475,6 +497,8 @@ Spec == Init /\ [][Next]_&lt;&lt;turn, moves&gt;&gt;
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Match ----
+EXTENDS FiniteSets
+
 CONSTANT Players
 VARIABLE waiting, matched
 
@@ -483,7 +507,7 @@ Init == /\ waiting = {}
 
 Join(p) == /\ p \in Players
            /\ p \notin waiting
-           /\ p \notin matched
+           /\ p \notin UNION matched
            /\ waiting' = waiting \cup {p}
            /\ UNCHANGED matched
 
@@ -511,10 +535,11 @@ Spec == Init /\ [][Next]_&lt;&lt;waiting, matched&gt;&gt;
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Trade ----
-CONSTANT Players, Items
+CONSTANT Players, Items, InitialInventory
+ASSUME InitialInventory \in [Players -&gt; SUBSET Items]
 VARIABLE inventory, offers
 
-Init == /\ inventory = [p \in Players |-&gt; {}]
+Init == /\ inventory = InitialInventory
         /\ offers = {}
 
 Offer(a, b, i) == /\ a # b
@@ -536,6 +561,13 @@ Next == (\E a, b \in Players, i \in Items : Offer(a,b,i))
 Spec == Init /\ [][Next]_&lt;&lt;inventory, offers&gt;&gt;
 ===============================================</code></pre></div>
 </div>
+<div class="code-wrap" data-lang="tla">
+<div class="code-toolbar"><span class="code-language">Trade.cfg の例</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>SPECIFICATION Spec
+CONSTANT Players = {"alice", "bob"}
+CONSTANT Items = {"sword"}
+CONSTANT InitialInventory = ["alice" |-&gt; {"sword"}, "bob" |-&gt; {}]</code></pre></div>
+</div>
 <p>実装が二つのDB書き込みなら、モデルの原子性はありません。トランザクション、イベントソーシング、補償処理のどれを採用するかを仕様にし、途中状態を観測できるかをPBTと統合テストで検査します。</p>
 </section>
 <section id="pluscal-raw">
@@ -543,7 +575,6 @@ Spec == Init /\ [][Next]_&lt;&lt;inventory, offers&gt;&gt;
 <div class="code-wrap" data-lang="pluscal">
 <div class="code-toolbar"><span class="code-language">PlusCal</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE LockPlusCal ----
-VARIABLE lock
 
 (* --algorithm Mutex
 variables lock = "free";
@@ -555,9 +586,14 @@ Acquire:
 Critical:
   skip;
 Release:
+  await lock = self;
   lock := "free";
 end process;
 end algorithm; *)
+
+\* BEGIN TRANSLATION
+\* PlusCal Translator がここに生成するTLA+を置く
+\* END TRANSLATION
 ================================</code></pre></div>
 </div>
 <div class="code-wrap" data-lang="tla">
@@ -582,6 +618,8 @@ Spec == Init /\ [][Next]_owner
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE DiscreteSum ----
+EXTENDS Naturals
+
 CONSTANT N
 VARIABLE i, total
 
@@ -591,7 +629,7 @@ Step == /\ i &lt; N
         /\ total' = total + i'
 
 Done == i = N
-Invariant == total = i * (i - 1) / 2
+Invariant == total = i * (i + 1) \div 2
 Next == Step
 Spec == Init /\ [][Next]_&lt;&lt;i, total&gt;&gt;
 ==============================================</code></pre></div>
@@ -604,7 +642,7 @@ Spec == Init /\ [][Next]_&lt;&lt;i, total&gt;&gt;
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Conservation ----
-EXTENDS Naturals
+EXTENDS Naturals, FiniteSets
 
 CONSTANT Capacity, Agents
 VARIABLE resource
@@ -617,26 +655,33 @@ Move(a, b) == /\ a # b
                     ![a] = @ - 1,
                     ![b] = @ + 1]
 
-Total == Sum({resource[a] : a \in Agents})
+RECURSIVE Sum(_)
+Sum(f) == IF DOMAIN f = {} THEN 0
+          ELSE LET x == CHOOSE e \in DOMAIN f : TRUE
+               IN f[x] + Sum([y \in DOMAIN f \ {x} |-&gt; f[y]])
+
+Total == Sum(resource)
 Invariant == Total = Cardinality(Agents) * Capacity
 Next == \E a, b \in Agents : Move(a, b)
 Spec == Init /\ [][Next]_resource
 ===============================================</code></pre></div>
 </div>
-<p>総量保存は一ステップの代数で説明できますが、マイナス禁止、上限、同時移動の公平性は別の性質です。どの不変量を「主」とし、どれを補助にするかを命名します。</p>
+<p>総量保存は一ステップの代数で説明できますが、マイナス禁止、上限、同時移動の公平性は別の性質です。ここでの`Sum`は関数の定義域を走査する自作演算子なので、同じ資源量を持つエージェントもそれぞれ合計できます。どの不変量を「主」とし、どれを補助にするかを命名します。</p>
 </section>
 <section id="physics-round">
 <h2 id="physics-round-heading">物理・数学例3：ラウンドロビンの公平性</h2>
-<p>相互排除と順番の進行を一つのモデルで考えます。下の`Proc`は説明用のシーケンスです。実際のモデルでは、次要素を選ぶ関数を厳密に定義し、空集合や切断を扱います。</p>
+<p>相互排除と順番の進行を一つのモデルで考えます。`Proc`はプロセスの集合とし、初期プロセスと次要素を返す関数を定数で与えます。実際のモデルでは、空集合や切断も扱います。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE RoundRobin ----
-EXTENDS Sequences
+EXTENDS FiniteSets
 
-CONSTANT Proc
+CONSTANT Proc, InitialProc, NextProc
+ASSUME /\ InitialProc \in Proc
+       /\ NextProc \in [Proc -&gt; Proc]
 VARIABLE turn, inCS
 
-Init == /\ turn = Proc[1] /\ inCS = {}
+Init == /\ turn = InitialProc /\ inCS = {}
 
 Enter(p) == /\ p = turn
             /\ p \notin inCS
@@ -645,7 +690,7 @@ Enter(p) == /\ p = turn
 
 Leave(p) == /\ p \in inCS
             /\ inCS' = inCS \ {p}
-            /\ UNCHANGED turn
+            /\ turn' = NextProc[p]
 
 MutualExclusion == Cardinality(inCS) &lt;= 1
 Next == \E p \in Proc : Enter(p) \/ Leave(p)
@@ -673,9 +718,18 @@ Spec == Init /\ [][Next]_&lt;&lt;turn, inCS&gt;&gt;
 <h3 id="extend-disconnect">ゲーム：切断を追加する</h3>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>Disconnect(p) == /\ p \in Players
+<div class="code-scroll"><pre class="code-block"><code>CONSTANT Players
+VARIABLE connected, turn
+
+Init == /\ connected = Players
+        /\ turn \in Players
+
+Disconnect(p) == /\ p \in Players
                  /\ connected' = connected \ {p}
-                 /\ UNCHANGED turn</code></pre></div>
+                 /\ UNCHANGED turn
+
+Next == \E p \in Players : Disconnect(p)
+Spec == Init /\ [][Next]_&lt;&lt;connected, turn&gt;&gt;</code></pre></div>
 </div>
 <p>接続がないプレイヤーへ手番を渡さないSafetyと、接続中のプレイヤーへいつか進むLivenessを分けます。切断・再接続・タイムアウトの順序が反例を変えます。</p>
 <h3 id="extend-report">反例を実装へ渡す</h3>
@@ -710,7 +764,7 @@ PBTにする操作列:</code></pre></div>
 <h2 id="summary-heading">まとめ</h2>
 <p>Webでは原子性・冪等性・整合性、ゲームでは手番・所有権・進行、物理・数学では保存量・離散化・公平性をモデル化しました。TLA+の実例は、設計判断を短い反例へ変換する練習です。</p>
 <p>次章では、同じ失敗を実装の入力・操作列としてPBTへ渡します。</p>
-</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>冪等性</dt><dd>同じ操作を繰り返しても効果が一度だけ、または結果が変わらない性質。</dd><dt>整合性</dt><dd>複数の状態や表現が、要求された関係を保つこと。</dd><dt>原子アクション</dt><dd>途中状態を分割せず一つの遷移として扱う操作。</dd><dt>stale read</dt><dd>キャッシュなどから古い値を読むこと。</dd><dt>補償処理</dt><dd>分割された処理の一部が成功した後、意味を戻すための処理。</dd><dt>抽象化境界</dt><dd>モデル化した範囲と、別の証拠へ渡した範囲の境目。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：在庫モデルのConserveは何を保証しますか。</summary><div class="answer">購入済みの件数と残在庫の合計が初期在庫に等しいことです。</div></details><details class="check-item"><summary>問2：キャッシュモデルでStaleReadを許すと何が変わりますか。</summary><div class="answer">cacheとoriginの一致は常に成立しなくなり、最新版性を別の性質にする必要があります。</div></details><details class="check-item"><summary>問3：ゲームのLivenessを検査するのに公平性が必要になる理由は何ですか。</summary><div class="answer">Pairや次の手番が有効でも永遠に選ばれない実行を除外するためです。</div></details><details class="check-item"><summary>問4：物理の離散TLA+モデルが浮動小数の丸めを保証しないのはなぜですか。</summary><div class="answer">整数・有限状態の抽象モデルであり、実装の数値表現や誤差を含めていないためです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="03-tlaplus-basics.html"><small>← 前の章</small><strong>03　TLA+ 基礎</strong></a><a href="05-pbt-basics.html"><small>次の章 →</small><strong>05　PBT 基礎</strong></a></nav>
+</section><section id="glossary" class="glossary"><h2 id="glossary-heading">用語集</h2><dl><dt>冪等性</dt><dd>同じ操作を繰り返しても効果が一度だけ、または結果が変わらない性質。</dd><dt>整合性</dt><dd>複数の状態や表現が、要求された関係を保つこと。</dd><dt>原子アクション</dt><dd>途中状態を分割せず一つの遷移として扱う操作。</dd><dt>stale read</dt><dd>キャッシュなどから古い値を読むこと。</dd><dt>補償処理</dt><dd>分割された処理の一部が成功した後、意味を戻すための処理。</dd><dt>抽象化境界</dt><dd>モデル化した範囲と、別の証拠へ渡した範囲の境目。</dd></dl></section><section id="checks" class="checks"><h2 id="checks-heading">理解度チェック</h2><details class="check-item"><summary>問1：在庫モデルのConserveは何を保証しますか。</summary><div class="answer">購入済みの件数と残在庫の合計が初期在庫に等しいことです。</div></details><details class="check-item"><summary>問2：CacheでWriteとRefreshを分ける理由は何ですか。</summary><div class="answer">Write直後にcacheが古くなり得る状態と、Refreshでoriginに追いつく遷移を別々に表すためです。</div></details><details class="check-item"><summary>問3：ゲームのLivenessを検査するのに公平性が必要になる理由は何ですか。</summary><div class="answer">Pairや次の手番が有効でも永遠に選ばれない実行を除外するためです。</div></details><details class="check-item"><summary>問4：物理の離散TLA+モデルが浮動小数の丸めを保証しないのはなぜですか。</summary><div class="answer">整数・有限状態の抽象モデルであり、実装の数値表現や誤差を含めていないためです。</div></details></section><nav class="chapter-nav-bottom" aria-label="章間ナビゲーション"><a href="03-tlaplus-basics.html"><small>← 前の章</small><strong>03　TLA+ 基礎</strong></a><a href="05-pbt-basics.html"><small>次の章 →</small><strong>05　PBT 基礎</strong></a></nav>
 <a class="page-top" href="#main-content">↑ このページの先頭へ戻る</a>
 </main>
 <script>

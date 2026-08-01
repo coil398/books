@@ -302,23 +302,25 @@ pre code { display: block; }
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
-elan default stable
+source "${HOME}/.elan/env"
+elan toolchain install leanprover/lean4:v4.19.0
+elan default leanprover/lean4:v4.19.0
 lake new fm-basics math
-cd fm-basics
-lake env lean Main.lean
-lake build</code></pre></div>
+cd fm-basics</code></pre></div>
 </div>
-<p>教材を試すだけなら`lake new`で十分ですが、チームの証拠にするなら`lean-toolchain`と`lake-manifest.json`をコミットします。Mathlibのキャッシュを使うCIでは、依存を取得するジョブと証明を検査するジョブを分けると原因が読みやすくなります。</p>
+<p>インストーラは親シェルの`PATH`を変更できないため、`source`を挟んでから`elan`を実行します。`stable`のような更新されるチャンネルは使わず、ここでは`leanprover/lean4:v4.19.0`を`lean-toolchain`へ保存してコミットします。教材を試すだけなら`lake new`でプロジェクトの雛形を作れますが、教材のコードは自動では`Main.lean`になりません。</p>
 <aside class="callout warning" role="note"><strong>版のずれは証明のずれになる</strong><p>Lean本体、Mathlib、エディタ拡張の版が違うと、同じ名前の定理やsimpの挙動が変わることがあります。証明が通った画面のスクリーンショットではなく、CIのtoolchainを証拠にします。</p></aside>
 <div class="code-wrap" data-lang="text">
 <div class="code-toolbar"><span class="code-language">プロジェクト確認</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>lean-toolchain
 lakefile.toml
 lake-manifest.json
-Main.lean
-
-# 例: リポジトリのルートで
-lake env lean Main.lean</code></pre></div>
+Main.lean</code></pre></div>
+</div>
+<p>`fm-basics/lean-toolchain`を次の一行で保存してからコミットします。</p>
+<div class="code-wrap" data-lang="text">
+<div class="code-toolbar"><span class="code-language">fm-basics/lean-toolchain</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>leanprover/lean4:v4.19.0</code></pre></div>
 </div>
 </section>
 <section id="minimal">
@@ -334,6 +336,12 @@ theorem double_zero : double 0 = 0 := by
 
 example (n : Nat) : double n = n + n := by
   rfl</code></pre></div>
+</div>
+<p>このコードを`fm-basics/Main.lean`として保存してから、プロジェクトディレクトリで検査します。</p>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>lake env lean Main.lean
+lake build</code></pre></div>
 </div>
 <p>`def`は計算可能な定義、`theorem`は名前を持つ証明付き宣言、`example`は検証後に名前を残さない宣言です。`by`の後ろはtactic列ですが、最終的には命題の型を持つ項を構築しています。</p>
 <p>`rfl`が通るのは、定義を展開した左右が定義上同じだからです。`simp`は登録された簡約規則を使います。どちらも魔法の正しさを追加するのではなく、Leanがすでに持つ定義や定理を適用しています。</p>
@@ -549,7 +557,12 @@ theorem future_proof : 2 + 2 = 4 := by
 <p>`sorry`は仮の証明を受け入れ、警告を出します。設計中に依存関係を先に進める用途はありますが、保証の証拠ではありません。CIでは`sorry`の利用を警告として拾い、リリース対象からゼロにします。</p>
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>lake build 2&gt;&amp;1 | rg "declaration uses 'sorry'"</code></pre></div>
+<div class="code-scroll"><pre class="code-block"><code>if ! lake build &gt; build.log 2&gt;&amp;1; then
+  cat build.log
+  exit 1
+fi
+cat build.log
+! rg -q "declaration uses 'sorry'" build.log</code></pre></div>
 </div>
 <aside class="callout danger" role="note"><strong>未証明を完了扱いしない</strong><p>定理名が存在しても、証明本体に`sorry`が残るなら、プロジェクトの保証は未完了です。issue、担当者、期限を記録し、警告を見逃さないCIにします。</p></aside>
 </section>

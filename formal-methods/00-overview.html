@@ -378,6 +378,8 @@ def first {α : Type} (page : NonEmptyPage α) : α :=
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Counter ----------------
+EXTENDS Naturals
+
 VARIABLE count
 
 Init == count = 0
@@ -412,7 +414,9 @@ def test_text_round_trip(value: str):
 <p>三手法を一つのECの購入フローへ割り当てます。TLA+は競合と冪等キー、PBTはJSON・操作列・実装境界、Leanは小計・割引・権限といった純粋な計算を担当します。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users, InitialStock
+<div class="code-scroll"><pre class="code-block"><code>EXTENDS Naturals
+
+CONSTANT Users, InitialStock
 VARIABLE stock, orders
 
 Init == /\ stock = InitialStock

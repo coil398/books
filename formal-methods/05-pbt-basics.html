@@ -303,9 +303,9 @@ pre code { display: block; }
 <div class="code-toolbar"><span class="code-language">Shell / Python</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>python -m venv .venv
 . .venv/bin/activate
-python -m pip install hypothesis pytest
-pytest -q</code></pre></div>
+python -m pip install hypothesis pytest</code></pre></div>
 </div>
+<p>次のコードを`test_strings.py`として保存してから、テストを実行します。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code># test_strings.py
@@ -316,14 +316,20 @@ def test_identity(s: str) -&gt; None:
     assert s == "".join(list(s))</code></pre></div>
 </div>
 <div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell / Python</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>pytest -q</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell / TypeScript</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>npm init -y
-npm install --save-dev typescript tsx fast-check vitest
-npx vitest run</code></pre></div>
+mkdir -p test
+npm install --save-dev typescript tsx fast-check vitest</code></pre></div>
 </div>
+<p>次のコードを`test/reverse.test.ts`として保存してから、Vitestを実行します。</p>
 <div class="code-wrap" data-lang="typescript">
-<div class="code-toolbar"><span class="code-language">TypeScript</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>import fc from "fast-check";
+<div class="code-toolbar"><span class="code-language">TypeScript / test/reverse.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>// test/reverse.test.ts
+import fc from "fast-check";
 import { test } from "vitest";
 
 test("reverse is involutive", () =&gt; {
@@ -331,6 +337,10 @@ test("reverse is involutive", () =&gt; {
     return [...xs].reverse().reverse().every((x, i) =&gt; x === xs[i]);
   }));
 });</code></pre></div>
+</div>
+<div class="code-wrap" data-lang="shell">
+<div class="code-toolbar"><span class="code-language">Shell / TypeScript</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>npx vitest run</code></pre></div>
 </div>
 <p>PBTの考え方は言語に依存しません。たとえばHaskellでも、純粋関数を実行可能な性質の対象にできます。</p>
 <div class="code-wrap" data-lang="haskell">
@@ -453,11 +463,12 @@ def test_integer_division_has_remainder(a: int, b: int):
 <div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
 
+# shrinkを観察するため、意図的に失敗させる例
 @given(st.lists(st.integers(), min_size=1))
 def test_no_negative(xs: list[int]):
     assert all(x &gt;= 0 for x in xs)</code></pre></div>
 </div>
-<p>実際の不具合なら、例えば`[0, -1]`のような入力へ縮みます。カスタム型は、単純なdataclassやenum、入れ子の構造を持たせると縮小しやすくなります。</p>
+<p>これは正常な実装の回帰テストではなく、shrinkを観察するための意図的な失敗例です。`st.integers()`は負数も生成するため、通常は`[-1]`のような一要素まで縮みます。負数を許さない本番契約のテストなら、入力を`st.integers(min_value=0)`で生成します。カスタム型は、単純なdataclassやenum、入れ子の構造を持たせると縮小しやすくなります。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / command generator</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>from dataclasses import dataclass
@@ -488,8 +499,9 @@ commands = st.builds(
 <h2 id="seed-heading">seed・path・再現性</h2>
 <p>Hypothesisは失敗例をデータベースへ保存し、fast-checkはseedとpathを出力します。seedはデバッグの入口であり、仕様の証拠ではありません。generatorやライブラリ版が変わると、同じseedで入力が変わることがあります。</p>
 <div class="code-wrap" data-lang="typescript">
-<div class="code-toolbar"><span class="code-language">TypeScript / fast-check</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>import fc from "fast-check";
+<div class="code-toolbar"><span class="code-language">TypeScript / test/seed.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>// test/seed.test.ts
+import fc from "fast-check";
 
 fc.assert(
   fc.property(fc.array(fc.integer()), xs =&gt; {
@@ -501,7 +513,11 @@ fc.assert(
 <p>CIログからseedをコピーするだけで終わらせず、縮小後の入力と性質名を固定fixtureにします。バージョンアップ時はfixtureが仕様として有効か確認し、古いseedに依存しすぎないようにします。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / regression</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>def test_regression_for_old_failure():
+<div class="code-scroll"><pre class="code-block"><code>def normalize(order: dict[str, list[int]]) -&gt; dict[str, list[int]]:
+    return {"items": list(order["items"])}
+
+
+def test_regression_for_old_failure():
     # PBTが見つけた縮小済み入力を固定する
     assert normalize({"items": [0]}) == {"items": [0]}</code></pre></div>
 </div>
@@ -512,36 +528,43 @@ fc.assert(
 <p>一回の関数呼び出しではなく、操作列で状態機械を揺さぶります。モデルは簡単であるほどよく、実装をそのままコピーして比較しないことが重要です。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / RuleBasedStateMachine</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>from hypothesis import strategies as st
+<div class="code-scroll"><pre class="code-block"><code>from collections.abc import Callable
+
+from hypothesis import strategies as st
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     invariant,
     rule,
 )
+from app import SetImplementation
 
-class SetModel(RuleBasedStateMachine):
-    def __init__(self):
-        super().__init__()
-        self.expected: set[int] = set()
-        self.actual: set[int] = set()
+def make_set_model(actual_factory: Callable[[], SetImplementation]):
+    class SetModel(RuleBasedStateMachine):
+        def __init__(self):
+            super().__init__()
+            self.expected: set[int] = set()
+            self.actual = actual_factory()
 
-    @rule(x=st.integers())
-    def add(self, x: int):
-        self.expected.add(x)
-        self.actual.add(x)
+        @rule(x=st.integers())
+        def add(self, x: int):
+            self.expected.add(x)
+            self.actual.add(x)
 
-    @rule(x=st.integers())
-    def remove(self, x: int):
-        self.expected.discard(x)
-        self.actual.discard(x)
+        @rule(x=st.integers())
+        def remove(self, x: int):
+            self.expected.discard(x)
+            self.actual.discard(x)
 
-    @invariant()
-    def agrees(self):
-        assert self.actual == self.expected
+        @invariant()
+        def agrees(self):
+            assert self.actual.snapshot() == self.expected
 
-TestSetModel = SetModel.TestCase</code></pre></div>
+    return SetModel
+
+
+TestSetModel = make_set_model(SetImplementation).TestCase</code></pre></div>
 </div>
-<p>実装とモデルが同じコードなら、同じバグを共有して比較が無意味になります。モデルは集合・カウンタ・enumなど、独立した簡単な意味にします。</p>
+<p>`SetImplementation`は実装側の公開API（ここでは`add`、`discard`、`snapshot`）を持つオブジェクトです。ファクトリで実装を注入し、モデルの集合と公開APIの結果を比較します。実装とモデルが同じコードなら、同じバグを共有して比較が無意味になります。</p>
 <h3 id="stateful-clock">時間を操作として生成する</h3>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / fake clock</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
@@ -561,13 +584,15 @@ TestSetModel = SetModel.TestCase</code></pre></div>
 <h2 id="model-based-heading">モデルベーステストとオラクル</h2>
 <p><dfn>モデルベーステスト</dfn>では、簡単な状態モデルに同じコマンド列を与え、実装の応答と状態を比較します。<dfn>オラクル</dfn>は実装と独立した判定基準です。</p>
 <div class="code-wrap" data-lang="typescript">
-<div class="code-toolbar"><span class="code-language">TypeScript / fast-check</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>import fc from "fast-check";
+<div class="code-toolbar"><span class="code-language">TypeScript / test/model.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>// test/model.test.ts
+import fc from "fast-check";
+import { Door } from "./door";
 
 type State = "closed" | "open";
 type Cmd = "open" | "close";
 
-const step = (state: State, command: Cmd): State =&gt;
+const stepModel = (state: State, command: Cmd): State =&gt;
   command === "open" &amp;&amp; state === "closed" ? "open" :
   command === "close" &amp;&amp; state === "open" ? "closed" :
   state;
@@ -576,10 +601,13 @@ fc.assert(fc.property(
   fc.array(fc.constantFrom&lt;Cmd&gt;("open", "close")),
   commands =&gt; {
     let model: State = "closed";
+    const actual = new Door();
     for (const command of commands) {
-      model = step(model, command);
+      model = stepModel(model, command);
+      if (command === "open") actual.open();
+      else actual.close();
     }
-    return model === "closed" || model === "open";
+    return actual.state() === model;
   },
 ));</code></pre></div>
 </div>
@@ -611,8 +639,10 @@ def nonempty_pair(draw):
 </div>
 <p>依存するindexを先に独立生成すると、リスト長との矛盾を`assume`で捨てることになります。`composite`で同じ生成手順にすると、常に有効なペアを作れます。</p>
 <div class="code-wrap" data-lang="typescript">
-<div class="code-toolbar"><span class="code-language">TypeScript / command union</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>import fc from "fast-check";
+<div class="code-toolbar"><span class="code-language">TypeScript / test/collection.test.ts</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>// test/collection.test.ts
+import fc from "fast-check";
+import { Collection } from "./collection";
 
 type Command =
   | { kind: "add"; n: number }
@@ -626,12 +656,20 @@ const commandArb = fc.oneof(
 fc.assert(fc.property(
   fc.array(commandArb),
   commands =&gt; {
-    const values: number[] = [];
+    const model: number[] = [];
+    const actual = new Collection();
     for (const command of commands) {
-      if (command.kind === "add") values.push(command.n);
-      else values.splice(0);
+      if (command.kind === "add") {
+        model.push(command.n);
+        actual.add(command.n);
+      } else {
+        model.splice(0);
+        actual.clear();
+      }
     }
-    return Array.isArray(values);
+    const values = actual.values();
+    return values.length === model.length &amp;&amp;
+      values.every((value, index) =&gt; value === model[index]);
   },
 ));</code></pre></div>
 </div>
@@ -674,10 +712,24 @@ def test_length_is_preserved(xs: list[int]):
     assert len(xs) == len(list(xs))</code></pre></div>
 </div>
 <p>PRでは短い例数、夜間では広い探索という二層構成が実務的です。`deadline=None`は重い計算を許す設定であり、外部APIを無制限に呼んでよい意味ではありません。</p>
+<div class="code-wrap" data-lang="python">
+<div class="code-toolbar"><span class="code-language">Python / tests/conftest.py</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>from hypothesis import settings
+
+settings.register_profile(
+    "nightly",
+    max_examples=2_000,
+    deadline=None,
+)</code></pre></div>
+</div>
 <div class="code-wrap" data-lang="yaml">
 <div class="code-toolbar"><span class="code-language">CI設定</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>name: property-tests
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   fast:
@@ -693,6 +745,11 @@ jobs:
   nightly:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install hypothesis pytest
       - run: pytest -q tests/property --hypothesis-profile=nightly</code></pre></div>
 </div>
 <p>CIの成功ログには、例数、profile、対象コミット、ライブラリ版を残します。失敗を単にretryして消すのではなく、縮小例をartifactと回帰テストへ移します。</p>

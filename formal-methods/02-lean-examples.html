@@ -367,7 +367,7 @@ example (xs : List Nat) (h : ∀ x ∈ xs, x ≤ 100) :
 variable {G : Type*} [Group G]
 
 theorem inv_mul_cancel_custom (x : G) : x⁻¹ * x = 1 := by
-  exact inv_mul_cancel₀ x
+  exact inv_mul_cancel x
 
 theorem mul_inv_cancel_custom (x : G) : x * x⁻¹ = 1 := by
   exact mul_inv_cancel x</code></pre></div>

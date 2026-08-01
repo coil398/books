@@ -309,6 +309,8 @@ pre code { display: block; }
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE Shop ----
+EXTENDS Naturals, FiniteSets
+
 CONSTANT Users, Keys, InitialStock
 VARIABLE stock, orders, applied
 
@@ -344,8 +346,9 @@ Spec == Init /\ [][Next]_&lt;&lt;stock, orders, applied&gt;&gt;
 </div>
 <p>ここで保証するのは、指定した有限集合とアクション粒度です。DBのトランザクション分離、決済サービスの部分成功、キーとpayloadの不一致は、次のモデル拡張かPBTへ渡します。</p>
 <div class="code-wrap" data-lang="tla">
-<div class="code-toolbar"><span class="code-language">TLC設定</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users = {"alice", "bob"}
+<div class="code-toolbar"><span class="code-language">Shop.cfg</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>SPECIFICATION Spec
+CONSTANT Users = {"alice", "bob"}
 CONSTANT Keys = {"k1", "k2"}
 CONSTANT InitialStock = 1
 INVARIANT TypeOK
@@ -520,7 +523,7 @@ def boundedDiscount (amount : Nat) (rate : Percent) : Nat :=
 theorem boundedDiscount_le (amount : Nat) (rate : Percent) :
     boundedDiscount amount rate &lt;= amount := by
   unfold boundedDiscount
-  omega</code></pre></div>
+  exact Nat.div_le_of_le_mul (Nat.mul_le_mul_left amount rate.bound)</code></pre></div>
 </div>
 <p>rateの範囲をvalidatorに任せる代わりに型へ埋め込むと、boundedDiscountの呼び出し側に前提が残ります。型を作る境界が本当に全API入口を覆うことは、PBT・レビューで確認します。</p>
 </section>
@@ -580,13 +583,32 @@ Lean:
 <div class="code-toolbar"><span class="code-language">CIジョブの分離</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>jobs:
   tla:
+    runs-on: ubuntu-latest
     steps:
-      - run: java -cp tla2tools.jar tlc2.TLC -config Shop.cfg Shop.tla
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: mkdir -p tools
+      - run: curl -fL --output tools/tla2tools-1.8.0.jar https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
+      - run: java -cp tools/tla2tools-1.8.0.jar tlc2.TLC -config Shop.cfg Shop.tla
   lean:
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: true
       - run: lake build
   pbt:
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install hypothesis pytest
       - run: pytest -q</code></pre></div>
 </div>
 <p>ジョブを分けると、どの保証が失敗したかが明確になります。成功ログにはTLCの定数、Leanのtoolchain、PBTの例数とprofileを記録します。</p>

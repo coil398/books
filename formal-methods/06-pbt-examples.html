@@ -427,38 +427,45 @@ from hypothesis.stateful import (
     invariant,
     rule,
 )
+from app import RateLimiter
 
 
-class RateLimitMachine(RuleBasedStateMachine):
-    def __init__(self):
-        super().__init__()
-        self.now = 0
-        self.calls: list[int] = []
+def make_rate_limit_machine(actual_factory):
+    class RateLimitMachine(RuleBasedStateMachine):
+        def __init__(self):
+            super().__init__()
+            self.now = 0
+            self.calls: list[int] = []
+            self.actual = actual_factory(clock=lambda: self.now)
 
-    @rule(delta=st.integers(min_value=0, max_value=10))
-    def advance(self, delta: int):
-        self.now += delta
-        self.calls = [
-            timestamp
-            for timestamp in self.calls
-            if timestamp &gt; self.now - 60
-        ]
+        @rule(delta=st.integers(min_value=0, max_value=10))
+        def advance(self, delta: int):
+            self.now += delta
+            self.calls = [
+                timestamp
+                for timestamp in self.calls
+                if timestamp &gt; self.now - 60
+            ]
 
-    @rule()
-    def request(self):
-        accepted = len(self.calls) &lt; 3
-        if accepted:
-            self.calls.append(self.now)
-        assert len(self.calls) &lt;= 3
+        @rule()
+        def request(self):
+            accepted = len(self.calls) &lt; 3
+            assert self.actual.allow() == accepted
+            if accepted:
+                self.calls.append(self.now)
+            assert self.actual.snapshot() == self.calls
 
-    @invariant()
-    def bounded(self):
-        assert len(self.calls) &lt;= 3
+        @invariant()
+        def bounded(self):
+            assert len(self.calls) &lt;= 3
 
 
-TestRateLimit = RateLimitMachine.TestCase</code></pre></div>
+    return RateLimitMachine
+
+
+TestRateLimit = make_rate_limit_machine(RateLimiter).TestCase</code></pre></div>
 </div>
-<p>このモデルは「受け付けた呼び出し時刻」の集合だけを見ています。本番の分散カウンタ、複数リージョン、時計の後退、永続化失敗は別のfakeやTLA+モデルへ追加します。</p>
+<p>`RateLimiter`は`allow`と`snapshot`を公開し、fake clockを注入できる実装です。モデルは「受け付けた呼び出し時刻」を独立に管理して結果と状態を比較します。本番の分散カウンタ、複数リージョン、時計の後退、永続化失敗は別のfakeやTLA+モデルへ追加します。</p>
 </section>
 <section id="math-integers">
 <h2 id="math-integers-heading">数学例1：整数の代数性質</h2>
@@ -633,37 +640,41 @@ from hypothesis.stateful import (
     invariant,
     rule,
 )
+from app import Inventory
 
 
-class InventoryMachine(RuleBasedStateMachine):
-    def __init__(self):
-        super().__init__()
-        self.model: dict[int, int] = {}
-        self.actual: dict[int, int] = {}
+def make_inventory_machine(actual_factory):
+    class InventoryMachine(RuleBasedStateMachine):
+        def __init__(self):
+            super().__init__()
+            self.model: dict[int, int] = {}
+            self.actual = actual_factory()
 
-    @rule(item=st.integers(0, 5),
-          amount=st.integers(0, 3))
-    def add(self, item: int, amount: int):
-        self.model[item] = self.model.get(item, 0) + amount
-        self.actual[item] = self.actual.get(item, 0) + amount
+        @rule(item=st.integers(0, 5),
+              amount=st.integers(0, 3))
+        def add(self, item: int, amount: int):
+            self.model[item] = self.model.get(item, 0) + amount
+            self.actual.add(item, amount)
 
-    @rule(item=st.integers(0, 5),
-          amount=st.integers(0, 3))
-    def remove(self, item: int, amount: int):
-        old = self.model.get(item, 0)
-        taken = min(old, amount)
-        self.model[item] = old - taken
-        current = self.actual.get(item, 0)
-        self.actual[item] = max(0, current - amount)
+        @rule(item=st.integers(0, 5),
+              amount=st.integers(0, 3))
+        def remove(self, item: int, amount: int):
+            old = self.model.get(item, 0)
+            taken = min(old, amount)
+            self.model[item] = old - taken
+            assert self.actual.remove(item, amount) == taken
 
-    @invariant()
-    def agrees(self):
-        assert self.actual == self.model
+        @invariant()
+        def agrees(self):
+            assert self.actual.snapshot() == self.model
 
 
-TestInventory = InventoryMachine.TestCase</code></pre></div>
+    return InventoryMachine
+
+
+TestInventory = make_inventory_machine(Inventory).TestCase</code></pre></div>
 </div>
-<p>モデルがremoveのunderflow規則をどう決めたかが重要です。エラーを返す仕様なら、成功・拒否・状態不変を別に観測します。</p>
+<p>`Inventory`は実装側の`add`、`remove`、`snapshot`という公開APIを持ち、ファクトリで状態機械へ注入しています。モデルがremoveのunderflow規則をどう決めたかが重要です。エラーを返す仕様なら、成功・拒否・状態不変を別に観測します。</p>
 </section>
 <section id="game-seed">
 <h2 id="game-seed-heading">ゲーム例2：乱数seedの再現性</h2>
@@ -672,17 +683,14 @@ TestInventory = InventoryMachine.TestCase</code></pre></div>
 <div class="code-toolbar"><span class="code-language">Python / Hypothesis</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>import random
 
-from hypothesis import given, strategies as st
-
 
 def roll(seed: int, count: int) -&gt; list[int]:
     rng = random.Random(seed)
     return [rng.randrange(6) + 1 for _ in range(count)]
 
 
-@given(st.integers(), st.integers(min_value=0, max_value=100))
-def test_seed_replays(seed: int, count: int):
-    assert roll(seed, count) == roll(seed, count)</code></pre></div>
+def test_seed_replays():
+    assert roll(42, 4) == [6, 1, 1, 6]</code></pre></div>
 </div>
 <p>同じseedでもゲームルールの版、乱数アルゴリズム、保存形式が変われば再現性が崩れます。seedだけでなく、ルール版と入力を保存します。</p>
 </section>
@@ -755,6 +763,7 @@ def test_damage_antitone_armor(power: int, a: int, b: int):
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / fake dependency</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>from hypothesis import given, strategies as st
+from app import Checkout
 
 
 class FakePayment:
@@ -772,14 +781,15 @@ class FakePayment:
 )
 def test_payment_arguments_are_observable(key: str, cents: int):
     fake = FakePayment()
-    fake.charge(key, cents)
+    checkout = Checkout(payment=fake)
+    checkout.pay(key, cents)
     assert fake.calls == [(key, cents)]</code></pre></div>
 </div>
 <p>失敗を生成するなら、`key == "fail"`のような特殊値だけに依存せず、成功・失敗・タイムアウト・重複応答を表す結果型を作ります。何を再現したfakeかを記録します。</p>
 <div class="code-wrap" data-lang="python">
 <div class="code-toolbar"><span class="code-language">Python / known regression</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>def test_known_replay_is_stable():
-    assert roll(42, 4) == roll(42, 4)</code></pre></div>
+    assert roll(42, 4) == [6, 1, 1, 6]</code></pre></div>
 </div>
 <aside class="callout tip" role="note"><strong>反例から固定例へ</strong><p>PBTが見つけた入力は、短い回帰テストとして固定します。seedだけを残すのではなく、縮小後の入力、ルール版、性質名を保存します。</p></aside>
 </section>

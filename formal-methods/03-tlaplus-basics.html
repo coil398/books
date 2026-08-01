@@ -302,12 +302,20 @@ pre code { display: block; }
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Counter ----------------
+EXTENDS Naturals
+
 VARIABLE count
 
 Init == count = 0
-Inc == count' = count + 1
+Inc == /\ count &lt; 10
+       /\ count' = count + 1
 Next == Inc
-Spec == Init /\ [][Next]_count
+TypeOK == count \in Nat
+Bound == count &lt;= 10
+Safety == count &gt;= 0
+Progress == &lt;&gt; (count &gt; 0)
+Fairness == WF_&lt;&lt;count&gt;&gt;(Inc)
+Spec == Init /\ [][Next]_count /\ Fairness
 ===============================================</code></pre></div>
 </div>
 <p>`Init`は初期状態、`Next`は一ステップの遷移、`Spec`は実行全体の仕様です。`[][Next]_count`はNextが起きるか、観測変数countが変わらないstutteringを許します。</p>
@@ -333,7 +341,7 @@ Spec == Init /\ [][Next]_count
 <p>TLCはモデルの状態を探索し、違反時に初期状態からのトレースを出します。`TypeOK`だけでは、在庫が負でない、二人が同じロックを持たない、台帳と残高が一致する、といった業務性質は保証しません。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+ / Safety</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>Safety == [] (count &gt;= 0)
+<div class="code-scroll"><pre class="code-block"><code>Safety == count &gt;= 0
 Progress == &lt;&gt; (count &gt; 0)</code></pre></div>
 </div>
 <p>Safetyは「悪い状態が起きない」、Livenessは「良い状態へいつか進む」です。Livenessには公平性、停止条件、環境の仮定が必要です。まずSafetyの反例を読めるモデルを作り、その後に進行性を追加します。</p>
@@ -343,7 +351,9 @@ Progress == &lt;&gt; (count &gt; 0)</code></pre></div>
 <div class="table-wrap"><table><thead><tr><th>記法</th><th>意味</th><th>実務での確認</th></tr></thead><tbody><tr><td>`/\`</td><td>かつ</td><td>一つの遷移に必要な前提と更新を束ねる</td></tr><tr><td>`\/`</td><td>または</td><td>別のアクションを選択する</td></tr><tr><td>`'`</td><td>次状態</td><td>更新する変数をすべて書く</td></tr><tr><td>`UNCHANGED x`</td><td>xは不変</td><td>意図しない非決定性を防ぐ</td></tr><tr><td>`[]`</td><td>常に</td><td>Safetyの時間演算子</td></tr><tr><td>`&lt;&gt;`</td><td>いつか</td><td>Livenessの時間演算子</td></tr><tr><td>`WF_vars(A)`</td><td>弱公平性</td><td>有効なAが永遠に選ばれない実行を除く</td></tr></tbody></table></div>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>VARIABLES stock, log
+<div class="code-scroll"><pre class="code-block"><code>EXTENDS Sequences
+
+VARIABLES stock, log
 
 Init == /\ stock = 1
         /\ log = &lt;&lt;&gt;&gt;
@@ -364,16 +374,17 @@ Spec == Init /\ [][Audit]_&lt;&lt;stock, log&gt;&gt;</code></pre></div>
 CONSTANT Users
 VARIABLE owner
 
-Init == owner = [u \in Users |-&gt; "free"]
+Init == owner = "free"
 
-Claim(u) == /\ owner[u] = "free"
-            /\ owner' = [owner EXCEPT ![u] = "claimed"]
+Claim(u) == /\ u \in Users
+            /\ owner = "free"
+            /\ owner' = u
 
-Release(u) == /\ owner[u] = "claimed"
-              /\ owner' = [owner EXCEPT ![u] = "free"]
+Release(u) == /\ owner = u
+              /\ owner' = "free"
 
 Next == \E u \in Users : Claim(u) \/ Release(u)
-TypeOK == owner \in [Users -&gt; {"free", "claimed"}]
+TypeOK == owner = "free" \/ owner \in Users
 Spec == Init /\ [][Next]_owner
 ===============================================</code></pre></div>
 </div>
@@ -406,6 +417,8 @@ Increment(k) == table' = [table EXCEPT ![k] = @ + 1]</code></pre></div>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---------------- MODULE Pair ----------------
+EXTENDS Naturals
+
 VARIABLES x, y
 vars == &lt;&lt;x, y&gt;&gt;
 
@@ -429,13 +442,17 @@ Spec == Init /\ [][Step]_vars
 <p>TLCはTLA+仕様に具体的な定数を与え、有限状態を探索するモデルチェッカーです。Toolboxやエディタ拡張から実行できますが、CIでは同じモデルと設定をコマンドで再現できるようにします。</p>
 <div class="code-wrap" data-lang="shell">
 <div class="code-toolbar"><span class="code-language">Shell</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>java -cp tla2tools.jar tlc2.TLC \
+<div class="code-scroll"><pre class="code-block"><code>mkdir -p tools
+curl -fL --output tools/tla2tools-1.8.0.jar \
+  https://github.com/tlaplus/tlaplus/releases/download/v1.8.0/tla2tools.jar
+java -cp tools/tla2tools-1.8.0.jar tlc2.TLC \
   -config Counter.cfg Counter.tla</code></pre></div>
 </div>
 <div class="code-wrap" data-lang="tla">
-<div class="code-toolbar"><span class="code-language">TLC設定の例</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>CONSTANT Users = {"alice", "bob"}
+<div class="code-toolbar"><span class="code-language">Counter.cfg</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
+<div class="code-scroll"><pre class="code-block"><code>SPECIFICATION Spec
 INVARIANT TypeOK
+INVARIANT Bound
 INVARIANT Safety
 PROPERTY Progress</code></pre></div>
 </div>
@@ -448,7 +465,6 @@ PROPERTY Progress</code></pre></div>
 <div class="code-wrap" data-lang="pluscal">
 <div class="code-toolbar"><span class="code-language">PlusCal</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
 <div class="code-scroll"><pre class="code-block"><code>---- MODULE MutexPlusCal ----
-VARIABLE lock
 
 (* --algorithm Mutex
 variables lock = "free";
@@ -460,9 +476,14 @@ Acquire:
 Critical:
   skip;
 Release:
+  await lock = self;
   lock := "free";
 end process;
 end algorithm; *)
+
+\* BEGIN TRANSLATION
+\* PlusCal Translator がここに生成するTLA+を置く
+\* END TRANSLATION
 ================================</code></pre></div>
 </div>
 <p>PlusCalは人間の制御フローを整理する入口、素のTLA+は集合・関係・時間演算子を直接書く出口です。変換後に`Acquire`が本当に一つの原子アクションか、`Release`が所有者だけに許されるかを検査します。</p>
@@ -488,7 +509,9 @@ State 3: stock = -1, reserved = {"alice", "bob"}</code></pre></div>
 <p>この例では、予約前の`stock &gt; 0`が抜けたか、判定と更新のatomicityが抜けています。実装のロックを議論する前に、仕様の一アクションを直します。反例の状態列は修正後もfixtureや設計資料として保存します。</p>
 <div class="code-wrap" data-lang="tla">
 <div class="code-toolbar"><span class="code-language">TLA+ / Conservation</span><button class="copy-button" type="button" aria-label="コードだけをコピー">コピー</button></div>
-<div class="code-scroll"><pre class="code-block"><code>CONSTANT Capacity, Users
+<div class="code-scroll"><pre class="code-block"><code>EXTENDS Naturals, FiniteSets
+
+CONSTANT Capacity, Users
 VARIABLES available, held
 
 Init == /\ available = Capacity
@@ -503,13 +526,18 @@ Return(u) == /\ held[u] = 1
              /\ available' = available + 1
              /\ held' = [held EXCEPT ![u] = 0]
 
+RECURSIVE Sum(_)
+Sum(f) == IF DOMAIN f = {} THEN 0
+          ELSE LET x == CHOOSE e \in DOMAIN f : TRUE
+               IN f[x] + Sum([y \in DOMAIN f \ {x} |-&gt; f[y]])
+
 Next == \E u \in Users : Take(u) \/ Return(u)
 TypeOK == /\ available \in Nat
           /\ held \in [Users -&gt; {0, 1}]
-Conservation == available + Sum({held[u] : u \in Users}) = Capacity
+Conservation == available + Sum(held) = Capacity
 Spec == Init /\ [][Next]_&lt;&lt;available, held&gt;&gt;</code></pre></div>
 </div>
-<p>保存不変量は、個々の操作が正しそうに見えるだけでは見つからない漏れを検出します。Returnの前提、初期値、二重取得を一つずつ壊して、どの短い反例になるかを学びます。</p>
+<p>保存不変量は、個々の操作が正しそうに見えるだけでは見つからない漏れを検出します。ここでの`Sum`は関数の定義域を一つずつ走査する自作演算子なので、同じ値を持つ利用者もそれぞれ数えます。Returnの前提、初期値、二重取得を一つずつ壊して、どの短い反例になるかを学びます。</p>
 </section>
 <section id="fairness">
 <h2 id="fairness-heading">Livenessと公平性</h2>
@@ -533,7 +561,7 @@ Init == status = "waiting"
 Complete == /\ status = "waiting"
             /\ status' = "done"
 EventuallyDone == &lt;&gt; (status = "done")
-Spec == Init /\ [][Complete]_status</code></pre></div>
+Spec == Init /\ [][Complete]_status /\ WF_&lt;&lt;status&gt;&gt;(Complete)</code></pre></div>
 </div>
 <aside class="callout warning" role="note"><strong>Livenessの仮定を書き残す</strong><p>ネットワークがいつか回復する、workerが公平に選ばれる、外部サービスが有限時間で返す、といった前提がないと、進行性の主張は過剰になります。</p></aside>
 </section>
